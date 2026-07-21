@@ -7,12 +7,12 @@ This implementation plan covers the DVTech AI-Powered Web-Based System — a uni
 ## Tasks
 
 - [ ] 1. Project Setup and Configuration
-  - [ ] 1.1 Initialize frontend project with Vite + React + TypeScript, install shadcn/ui, Tailwind CSS, react-router-dom, axios, react-hook-form, zod, and configure tsconfig
-  - [ ] 1.2 Initialize backend project with Express.js + TypeScript, install sequelize, sequelize-typescript, mysql2, bcrypt, jsonwebtoken, express-validator, cors, dotenv, openai SDK, and configure tsconfig
-  - [ ] 1.3 Initialize Python AI service with FastAPI, install opencv-python, uvicorn, pydantic, and create project structure
-  - [ ] 1.4 Create MySQL database schema and Sequelize migrations for all tables (USERS, SERVICE_REQUESTS, ROOM_ASSESSMENTS, AI_RECOMMENDATIONS, AIRCON_PRODUCTS, TECHNICIAN_DETAILS, TECHNICIAN_SCHEDULE, BTU_FACTORS, REPORTS)
-  - [ ] 1.5 Create Sequelize models with sequelize-typescript decorators and define associations (User, ServiceRequest, RoomAssessment, AiRecommendation, AirconProduct, TechnicianDetail, TechnicianSchedule, BtuFactor, Report)
-  - [ ] 1.6 Set up environment configuration files (.env.example) for backend (DB credentials, JWT secret, OpenAI API key, AI service URL) and AI service (host, port)
+  - [x] 1.1 Initialize frontend project with Vite + React + TypeScript, install shadcn/ui, Tailwind CSS, react-router-dom, axios, react-hook-form, zod, and configure tsconfig
+  - [x] 1.2 Initialize backend project with Express.js + TypeScript, install sequelize, sequelize-typescript, mysql2, bcrypt, jsonwebtoken, express-validator, cors, dotenv, openai SDK, and configure tsconfig
+  - [x] 1.3 Initialize Python AI service with FastAPI, install opencv-python, uvicorn, pydantic, and create project structure
+  - [x] 1.4 Create MySQL database schema and Sequelize migrations for all tables (USERS, SERVICE_REQUESTS, ROOM_ASSESSMENTS, AI_RECOMMENDATIONS, AIRCON_PRODUCTS, TECHNICIAN_DETAILS, TECHNICIAN_SCHEDULE, BTU_FACTORS, REPORTS)
+  - [x] 1.5 Create Sequelize models with sequelize-typescript decorators and define associations (User, ServiceRequest, RoomAssessment, AiRecommendation, AirconProduct, TechnicianDetail, TechnicianSchedule, BtuFactor, Report)
+  - [x] 1.6 Set up environment configuration files (.env.example) for backend (DB credentials, JWT secret, OpenAI API key, AI service URL) and AI service (host, port)
 - [ ] 2. Authentication and Authorization Module
   - [ ] 2.1 Create authService with registration logic (validate input, check email uniqueness, hash password with bcrypt, create user with 'customer' role)
   - [ ] 2.2 Create authService with login logic (validate credentials, compare hashed password, generate JWT with user id and role, return token)

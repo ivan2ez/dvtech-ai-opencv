@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
@@ -23,10 +24,24 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    if (error.response) {
+      const status = error.response.status;
+      const message =
+        error.response.data?.message || error.response.statusText || 'An unexpected error occurred';
+
+      if (status === 401) {
+        // Clear token and redirect to login
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else if (status >= 400) {
+        // Show error toast for all other 4xx/5xx errors
+        toast.error(message);
+      }
+    } else if (error.request) {
+      // Network error — no response received
+      toast.error('Network error. Please check your connection.');
     }
+
     return Promise.reject(error);
   }
 );

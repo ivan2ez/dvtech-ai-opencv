@@ -7,6 +7,7 @@ import { TechnicianDetail } from './TechnicianDetail';
 import { TechnicianSchedule } from './TechnicianSchedule';
 import { BtuFactor } from './BtuFactor';
 import { Report } from './Report';
+import { ServiceType } from './ServiceType';
 
 // All models array for Sequelize instance registration
 const models = [
@@ -19,6 +20,7 @@ const models = [
   TechnicianSchedule,
   BtuFactor,
   Report,
+  ServiceType,
 ];
 
 export {
@@ -31,5 +33,6 @@ export {
   TechnicianSchedule,
   BtuFactor,
   Report,
+  ServiceType,
   models,
 };

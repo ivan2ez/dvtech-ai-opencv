@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCwIcon, ClipboardListIcon, PlayCircleIcon, CheckCircle2Icon } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import type { TechnicianSchedule } from '@/types';
@@ -95,16 +94,6 @@ export function TechnicianDashboard() {
               <p className="text-3xl font-bold">{completedCount}</p>
               <p className="text-xs text-muted-foreground">Tasks finished</p>
             </div>
-          </div>
-
-          {/* Quick Link */}
-          <div className="pt-4">
-            <Link to="/technician/tasks">
-              <Button>
-                <ClipboardListIcon data-icon="inline-start" />
-                View My Tasks
-              </Button>
-            </Link>
           </div>
         </>
       )}

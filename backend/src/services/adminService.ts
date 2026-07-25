@@ -1,4 +1,4 @@
-import { User, TechnicianDetail } from '../models';
+import { User, TechnicianDetail, ServiceRequest, Report } from '../models';
 import bcrypt from 'bcrypt';
 
 // --- Types ---
@@ -208,4 +208,24 @@ export async function deactivateTechnician(technicianId: number): Promise<void> 
 
   user.isActive = false;
   await user.save();
+}
+
+// --- Dashboard Stats ---
+
+export interface DashboardStats {
+  pendingRequests: number;
+  activeTechnicians: number;
+  totalCustomers: number;
+  totalReports: number;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const [pendingRequests, activeTechnicians, totalCustomers, totalReports] = await Promise.all([
+    ServiceRequest.count({ where: { status: 'pending' } }),
+    TechnicianDetail.count({ where: { availabilityStatus: 'available' } }),
+    User.count({ where: { role: 'customer' } }),
+    Report.count(),
+  ]);
+
+  return { pendingRequests, activeTechnicians, totalCustomers, totalReports };
 }

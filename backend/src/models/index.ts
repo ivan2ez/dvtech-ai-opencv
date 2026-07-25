@@ -3,6 +3,8 @@ import { ServiceRequest } from './ServiceRequest';
 import { RoomAssessment } from './RoomAssessment';
 import { AiRecommendation } from './AiRecommendation';
 import { AirconProduct } from './AirconProduct';
+import { ProductImage } from './ProductImage';
+import { Brand } from './Brand';
 import { TechnicianDetail } from './TechnicianDetail';
 import { TechnicianSchedule } from './TechnicianSchedule';
 import { BtuFactor } from './BtuFactor';
@@ -16,6 +18,8 @@ const models = [
   RoomAssessment,
   AiRecommendation,
   AirconProduct,
+  ProductImage,
+  Brand,
   TechnicianDetail,
   TechnicianSchedule,
   BtuFactor,
@@ -29,6 +33,8 @@ export {
   RoomAssessment,
   AiRecommendation,
   AirconProduct,
+  ProductImage,
+  Brand,
   TechnicianDetail,
   TechnicianSchedule,
   BtuFactor,

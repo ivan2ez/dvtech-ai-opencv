@@ -10,6 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { ServiceRequest } from './ServiceRequest';
 import { AiRecommendation } from './AiRecommendation';
+import { User } from './User';
 
 @Table({
   tableName: 'room_assessments',
@@ -25,14 +26,22 @@ export class RoomAssessment extends Model {
   })
   declare id: number;
 
-  @ForeignKey(() => ServiceRequest)
+  @ForeignKey(() => User)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
+    field: 'user_id',
+  })
+  declare userId: number;
+
+  @ForeignKey(() => ServiceRequest)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
     unique: true,
     field: 'service_request_id',
   })
-  declare serviceRequestId: number;
+  declare serviceRequestId: number | null;
 
   @Column({
     type: DataType.FLOAT,
@@ -72,6 +81,9 @@ export class RoomAssessment extends Model {
   declare createdAt: Date;
 
   // Associations
+  @BelongsTo(() => User, 'userId')
+  declare user: User;
+
   @BelongsTo(() => ServiceRequest, 'serviceRequestId')
   declare serviceRequest: ServiceRequest;
 

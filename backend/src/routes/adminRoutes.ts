@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { roleMiddleware } from '../middlewares/roleMiddleware';
 import {
+  getDashboardStatsHandler,
   getCustomersHandler,
   deactivateCustomerHandler,
   getTechniciansHandler,
@@ -11,6 +12,14 @@ import {
 } from '../controllers/adminController';
 
 const router = Router();
+
+// Dashboard stats
+router.get(
+  '/stats',
+  authMiddleware,
+  roleMiddleware('admin'),
+  getDashboardStatsHandler
+);
 
 // All admin routes require authentication + admin role
 router.get(

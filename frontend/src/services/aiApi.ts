@@ -1,11 +1,11 @@
 import api from './api';
 
 export interface RoomAssessmentInput {
-  serviceRequestId: number;
   area: number;
   ceilingHeight: number;
   occupancy: number;
   sunlightLevel: string;
+  serviceRequestId?: number;
   image?: File;
 }
 
@@ -45,11 +45,13 @@ export interface RoomAssessmentResponse {
 
 export async function submitRoomAssessment(input: RoomAssessmentInput): Promise<RoomAssessmentResponse> {
   const formData = new FormData();
-  formData.append('serviceRequestId', String(input.serviceRequestId));
   formData.append('area', String(input.area));
   formData.append('ceilingHeight', String(input.ceilingHeight));
   formData.append('occupancy', String(input.occupancy));
   formData.append('sunlightLevel', input.sunlightLevel);
+  if (input.serviceRequestId) {
+    formData.append('serviceRequestId', String(input.serviceRequestId));
+  }
   if (input.image) {
     formData.append('image', input.image);
   }

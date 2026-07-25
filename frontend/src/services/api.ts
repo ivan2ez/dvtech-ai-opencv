@@ -30,9 +30,17 @@ api.interceptors.response.use(
         error.response.data?.message || error.response.statusText || 'An unexpected error occurred';
 
       if (status === 401) {
-        // Clear token and redirect to login
+        // Clear token — AuthContext will handle state cleanup
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        // Don't redirect for profile restoration calls (AuthContext handles this)
+        // Only redirect for user-initiated actions that get 401
+        const requestUrl = error.config?.url ?? '';
+        if (!requestUrl.includes('/auth/profile')) {
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/login' && currentPath !== '/register') {
+            window.location.href = '/login';
+          }
+        }
       } else if (status >= 400) {
         // Show error toast for all other 4xx/5xx errors
         toast.error(message);

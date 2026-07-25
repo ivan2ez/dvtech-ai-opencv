@@ -303,7 +303,14 @@ export async function listSchedules(options: ListSchedulesOptions) {
     include: [
       {
         model: ServiceRequest,
-        attributes: ['id', 'serviceType', 'acDetails', 'status'],
+        attributes: ['id', 'serviceType', 'acDetails', 'status', 'userId'],
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'email'],
+          },
+        ],
       },
       {
         model: User,
@@ -330,7 +337,14 @@ export async function getScheduleById(id: number, userId: number, role: string):
     include: [
       {
         model: ServiceRequest,
-        attributes: ['id', 'serviceType', 'acDetails', 'status'],
+        attributes: ['id', 'serviceType', 'acDetails', 'status', 'userId'],
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'email'],
+          },
+        ],
       },
       {
         model: User,

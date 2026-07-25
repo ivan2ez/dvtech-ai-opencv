@@ -321,7 +321,7 @@ export function TaskDetail() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Customer</p>
-              <p className="font-medium">User #{schedule.serviceRequest.userId}</p>
+              <p className="font-medium">{schedule.serviceRequest?.user?.name ?? `User #${schedule.serviceRequest?.userId ?? '—'}`}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">AC Details</p>

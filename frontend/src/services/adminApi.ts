@@ -58,8 +58,8 @@ export async function deactivateCustomer(id: number): Promise<void> {
 // --- Technician Endpoints ---
 
 export async function getTechnicians(): Promise<TechnicianAccount[]> {
-  const response = await api.get<TechnicianAccount[]>('/admin/technicians');
-  return response.data;
+  const response = await api.get<{ data: TechnicianAccount[] }>('/admin/technicians');
+  return response.data.data;
 }
 
 export async function createTechnician(data: CreateTechnicianData): Promise<TechnicianAccount> {

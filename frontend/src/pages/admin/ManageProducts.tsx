@@ -2,16 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { PlusIcon, PencilIcon, TrashIcon, SearchIcon, ArrowUpDown, ImageIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -38,6 +40,8 @@ import {
   updateProduct,
   deleteProduct,
 } from '@/services/productApi';
+import { ProductImageManager } from '@/components/admin/ProductImageManager';
+import { getBrands, type Brand } from '@/services/brandApi';
 
 const productSchema = z.object({
   brand: z.string().min(1, 'Brand is required').max(100),
@@ -53,10 +57,20 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 const PRODUCT_TYPES = [
+  { value: 'all', label: 'All Types' },
   { value: 'split-type', label: 'Split Type' },
   { value: 'window-type', label: 'Window Type' },
   { value: 'floor-standing', label: 'Floor Standing' },
 ] as const;
+
+const PRODUCT_TYPES_FORM = [
+  { value: 'split-type', label: 'Split Type' },
+  { value: 'window-type', label: 'Window Type' },
+  { value: 'floor-standing', label: 'Floor Standing' },
+] as const;
+
+type SortField = 'price' | 'btuCapacity';
+type SortDirection = 'asc' | 'desc';
 
 export function ManageProducts() {
   const [products, setProducts] = useState<AirconProduct[]>([]);
@@ -67,8 +81,26 @@ export function ManageProducts() {
     totalPages: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AirconProduct | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Confirm delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<AirconProduct | null>(null);
+
+  // Image manager state
+  const [imageManagerOpen, setImageManagerOpen] = useState(false);
+  const [imageManagerProduct, setImageManagerProduct] = useState<AirconProduct | null>(null);
+
+  // Brands state
+  const [brands, setBrands] = useState<Brand[]>([]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as unknown as Resolver<ProductFormValues>,
@@ -86,12 +118,14 @@ export function ManageProducts() {
 
   const fetchProducts = useCallback(async (page = 1) => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await getProducts({ page, pageSize: 10 });
       setProducts(response.data);
       setPagination(response.pagination);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+      setError('Failed to load products. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +133,35 @@ export function ManageProducts() {
 
   useEffect(() => {
     void fetchProducts();
+    void getBrands().then(setBrands).catch(() => {});
   }, [fetchProducts]);
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }
+
+  // Client-side filtering and sorting
+  const filteredProducts = products
+    .filter((p) => {
+      const matchesType = typeFilter === 'all' || p.type === typeFilter;
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        !query ||
+        p.brand.toLowerCase().includes(query) ||
+        p.model.toLowerCase().includes(query);
+      return matchesType && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      const aVal = a[sortField];
+      const bVal = b[sortField];
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
 
   function handleOpenCreate() {
     setEditingProduct(null);
@@ -131,13 +193,21 @@ export function ManageProducts() {
     setDialogOpen(true);
   }
 
-  async function handleDelete(id: number) {
-    if (!window.confirm('Are you sure you want to deactivate this product?')) return;
+  function handleOpenDeleteDialog(product: AirconProduct) {
+    setDeletingProduct(product);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deletingProduct) return;
     try {
-      await deleteProduct(id);
+      await deleteProduct(deletingProduct.id);
+      setDeleteDialogOpen(false);
+      setDeletingProduct(null);
       await fetchProducts(pagination.page);
-    } catch (error) {
-      console.error('Failed to delete product:', error);
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      setError('Failed to deactivate product. Please try again.');
     }
   }
 
@@ -150,8 +220,9 @@ export function ManageProducts() {
       }
       setDialogOpen(false);
       await fetchProducts(pagination.page);
-    } catch (error) {
-      console.error('Failed to save product:', error);
+    } catch (err) {
+      console.error('Failed to save product:', err);
+      setError('Failed to save product. Please try again.');
     }
   }
 
@@ -163,7 +234,7 @@ export function ManageProducts() {
   }
 
   function getTypeLabel(type: string) {
-    return PRODUCT_TYPES.find((t) => t.value === type)?.label ?? type;
+    return PRODUCT_TYPES_FORM.find((t) => t.value === type)?.label ?? type;
   }
 
   return (
@@ -190,7 +261,17 @@ export function ManageProducts() {
                     <FormItem>
                       <FormLabel>Brand</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Daikin" {...field} />
+                        <select
+                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                          {...field}
+                        >
+                          <option value="">Select a brand...</option>
+                          {brands.map((b) => (
+                            <option key={b.id} value={b.name}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -220,7 +301,7 @@ export function ManageProducts() {
                           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                           {...field}
                         >
-                          {PRODUCT_TYPES.map((t) => (
+                          {PRODUCT_TYPES_FORM.map((t) => (
                             <option key={t.value} value={t.value}>
                               {t.label}
                             </option>
@@ -333,71 +414,195 @@ export function ManageProducts() {
         </Dialog>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="relative w-full sm:w-64">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search brand or model..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="type-filter" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+            Type:
+          </label>
+          <select
+            id="type-filter"
+            className="flex h-9 w-44 rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            {PRODUCT_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="flex items-center justify-center py-6">
+          <div className="text-center space-y-4">
+            <p className="text-destructive">{error}</p>
+            <Button variant="outline" onClick={() => { setError(null); void fetchProducts(pagination.page); }}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <p className="text-muted-foreground">Loading products...</p>
         </div>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Brand</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>HP</TableHead>
-                <TableHead>BTU</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.length === 0 ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    No products found.
-                  </TableCell>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Model</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>HP</TableHead>
+                  <TableHead>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={() => toggleSort('btuCapacity')}
+                    >
+                      BTU
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </TableHead>
+                  <TableHead>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={() => toggleSort('price')}
+                    >
+                      Price
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.brand}</TableCell>
-                    <TableCell>{product.model}</TableCell>
-                    <TableCell>{getTypeLabel(product.type)}</TableCell>
-                    <TableCell>{product.horsepower}</TableCell>
-                    <TableCell>{product.btuCapacity.toLocaleString()}</TableCell>
-                    <TableCell>{formatPrice(product.price)}</TableCell>
-                    <TableCell>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                      No products found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.brand}</TableCell>
+                      <TableCell>{product.model}</TableCell>
+                      <TableCell>{getTypeLabel(product.type)}</TableCell>
+                      <TableCell>{product.horsepower}</TableCell>
+                      <TableCell>{product.btuCapacity.toLocaleString()}</TableCell>
+                      <TableCell>{formatPrice(product.price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                          {product.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => { setImageManagerProduct(product); setImageManagerOpen(true); }}
+                            aria-label={`Manage images for ${product.brand} ${product.model}`}
+                          >
+                            <ImageIcon />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => handleOpenEdit(product)}
+                            aria-label={`Edit ${product.brand} ${product.model}`}
+                          >
+                            <PencilIcon />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon-sm"
+                            onClick={() => handleOpenDeleteDialog(product)}
+                            aria-label={`Delete ${product.brand} ${product.model}`}
+                          >
+                            <TrashIcon />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {filteredProducts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No products found.</p>
+            ) : (
+              filteredProducts.map((product) => (
+                <Card key={product.id}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{product.brand} {product.model}</span>
                       <Badge variant={product.isActive ? 'default' : 'secondary'}>
                         {product.isActive ? 'Active' : 'Inactive'}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleOpenEdit(product)}
-                          aria-label={`Edit ${product.brand} ${product.model}`}
-                        >
-                          <PencilIcon />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon-sm"
-                          onClick={() => void handleDelete(product.id)}
-                          aria-label={`Delete ${product.brand} ${product.model}`}
-                        >
-                          <TrashIcon />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <p><span className="text-muted-foreground">Type:</span> {getTypeLabel(product.type)}</p>
+                      <p><span className="text-muted-foreground">HP:</span> {product.horsepower} | <span className="text-muted-foreground">BTU:</span> {product.btuCapacity.toLocaleString()}</p>
+                      <p><span className="text-muted-foreground">Price:</span> {formatPrice(product.price)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => { setImageManagerProduct(product); setImageManagerOpen(true); }}
+                      >
+                        <ImageIcon className="h-4 w-4 mr-1" />
+                        Images
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleOpenEdit(product)}
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleOpenDeleteDialog(product)}
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
@@ -425,6 +630,46 @@ export function ManageProducts() {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Deactivation</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to deactivate{' '}
+            <span className="font-medium text-foreground">
+              {deletingProduct?.brand} {deletingProduct?.model}
+            </span>
+            ? This product will no longer appear in active listings.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleConfirmDelete()}
+            >
+              Deactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Image Manager */}
+      {imageManagerProduct && (
+        <ProductImageManager
+          productId={imageManagerProduct.id}
+          productName={`${imageManagerProduct.brand} ${imageManagerProduct.model}`}
+          open={imageManagerOpen}
+          onOpenChange={setImageManagerOpen}
+        />
       )}
     </div>
   );

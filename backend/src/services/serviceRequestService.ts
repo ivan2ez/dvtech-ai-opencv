@@ -1,4 +1,4 @@
-import { ServiceRequest } from '../models';
+import { ServiceRequest, User } from '../models';
 
 // --- Types ---
 
@@ -108,6 +108,13 @@ export async function listServiceRequests(
 
   const { rows, count } = await ServiceRequest.findAndCountAll({
     where: whereClause,
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email'],
+      },
+    ],
     order: [['createdAt', 'DESC']],
     limit: pageSize,
     offset,

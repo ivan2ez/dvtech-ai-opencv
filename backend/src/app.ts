@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 // Load environment variables before any other imports that may depend on them
 dotenv.config();
 
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import sequelize from './database/connection';
@@ -11,6 +12,7 @@ import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
 import btuFactorRoutes from './routes/btuFactorRoutes';
 import serviceTypeRoutes from './routes/serviceTypeRoutes';
+import brandRoutes from './routes/brandRoutes';
 import serviceRequestRoutes from './routes/serviceRequestRoutes';
 import aiRoutes from './routes/aiRoutes';
 import scheduleRoutes from './routes/scheduleRoutes';
@@ -41,10 +43,14 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+
 // Public routes with rate limiting
 app.use('/api/auth', publicRateLimiter, authRoutes);
 app.use('/api/products', publicRateLimiter, productRoutes);
 app.use('/api/services', publicRateLimiter, serviceTypeRoutes);
+app.use('/api/brands', publicRateLimiter, brandRoutes);
 
 // Protected routes (no public rate limiting needed)
 app.use('/api/btu-factors', btuFactorRoutes);

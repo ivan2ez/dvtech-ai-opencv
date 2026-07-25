@@ -102,6 +102,7 @@ export interface ServiceRequest {
   status: ServiceRequestStatus;
   createdAt: string;
   updatedAt: string;
+  user?: { id: number; name: string; email: string };
 }
 
 export interface ServiceRequestFormData {
@@ -122,7 +123,9 @@ export interface TechnicianSchedule {
   report: string | null;
   createdAt: string;
   updatedAt: string;
-  serviceRequest?: ServiceRequest;
+  serviceRequest?: ServiceRequest & {
+    user?: { id: number; name: string; email: string };
+  };
   technician?: { id: number; name: string; email: string };
 }
 
@@ -143,4 +146,16 @@ export interface AssignTechnicianData {
   serviceRequestId: number;
   scheduledDate: string;
   priority?: SchedulePriority;
+}
+
+/**
+ * Generic backend paginated response shape.
+ * Used to map raw backend responses into the frontend PaginatedResponse<T> type.
+ */
+export interface BackendPaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }

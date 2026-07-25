@@ -17,6 +17,6 @@ export async function registerApi(data: RegisterData): Promise<AuthResponse> {
 }
 
 export async function getProfileApi(): Promise<User> {
-  const response = await api.get<{ user: User }>('/auth/profile');
-  return response.data.user;
+  const response = await api.get<User>('/auth/profile');
+  return response.data;
 }

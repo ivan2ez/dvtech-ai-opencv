@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -43,26 +45,20 @@ function getNavLinks(role: UserRole | null): NavLink[] {
         { label: 'Services', to: '/services' },
         { label: 'Products', to: '/products' },
         { label: 'Dashboard', to: '/dashboard' },
-        { label: 'My Requests', to: '/my-requests' },
-        { label: 'AI Recommendation', to: '/ai-recommendation' },
-        { label: 'Chat', to: '/chat' },
       ];
     case 'admin':
       return [
         { label: 'Home', to: '/' },
-        { label: 'Admin Dashboard', to: '/admin' },
-        { label: 'Requests', to: '/admin/requests' },
-        { label: 'Schedules', to: '/admin/schedules' },
-        { label: 'Products', to: '/admin/products' },
-        { label: 'BTU Factors', to: '/admin/btu-factors' },
-        { label: 'Accounts', to: '/admin/accounts' },
-        { label: 'Reports', to: '/admin/reports' },
+        { label: 'Services', to: '/services' },
+        { label: 'Products', to: '/products' },
+        { label: 'Dashboard', to: '/admin' },
       ];
     case 'technician':
       return [
         { label: 'Home', to: '/' },
-        { label: 'Technician Dashboard', to: '/technician' },
-        { label: 'My Tasks', to: '/technician/tasks' },
+        { label: 'Services', to: '/services' },
+        { label: 'Products', to: '/products' },
+        { label: 'Dashboard', to: '/technician' },
       ];
     default:
       return [
@@ -85,6 +81,7 @@ function getInitials(name: string): string {
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = getNavLinks(isAuthenticated ? user?.role ?? null : null);
@@ -94,9 +91,14 @@ export function Navbar() {
     navigate('/');
   };
 
+  function isActive(linkTo: string): boolean {
+    if (linkTo === '/') return location.pathname === '/';
+    return location.pathname === linkTo || location.pathname.startsWith(linkTo + '/');
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between px-4">
+      <div className="container mx-auto flex h-14 items-center justify-between px-4">
         {/* Logo / Brand */}
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
           <span className="text-primary">DVTech</span>
@@ -108,7 +110,12 @@ export function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
+              className={cn(
+                "px-3 py-2 text-sm font-medium transition-colors rounded-md",
+                isActive(link.to)
+                  ? "text-foreground bg-accent"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
             >
               {link.label}
             </Link>
@@ -150,7 +157,12 @@ export function Navbar() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileOpen(false)}
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium transition-colors rounded-md",
+                    isActive(link.to)
+                      ? "text-foreground bg-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -229,23 +241,23 @@ function UserMenu({ user, onLogout }: UserMenuProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/profile">Profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive cursor-pointer"
-          onClick={onLogout}
-        >
-          Logout
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.name}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link to="/profile">Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive cursor-pointer"
+            onClick={onLogout}
+          >
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

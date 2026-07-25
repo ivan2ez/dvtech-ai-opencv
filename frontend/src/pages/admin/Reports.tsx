@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FileTextIcon, DownloadIcon, RefreshCwIcon, Loader2Icon } from 'lucide-react';
+import { FileTextIcon, DownloadIcon, RefreshCwIcon, Loader2Icon, ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +55,14 @@ function getDefaultEndDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+type SortField = 'generatedDate';
+type SortDirection = 'asc' | 'desc';
+
 export function Reports() {
+  // Sort state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
   // Form state
   const [reportType, setReportType] = useState<ReportType>('service_summary');
   const [startDate, setStartDate] = useState(getDefaultStartDate());
@@ -131,6 +138,24 @@ export function Reports() {
       setIsGenerating(false);
     }
   }
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }
+
+  const sortedReports = [...reports].sort((a, b) => {
+    if (!sortField) return 0;
+    const modifier = sortDirection === 'asc' ? 1 : -1;
+    if (sortField === 'generatedDate') {
+      return (new Date(a.generatedDate).getTime() - new Date(b.generatedDate).getTime()) * modifier;
+    }
+    return 0;
+  });
 
   async function handleExport(id: number, format: 'csv' | 'pdf') {
     setExportingId(id);
@@ -455,65 +480,116 @@ export function Reports() {
 
           {!isLoadingHistory && !historyError && (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Summary</TableHead>
-                    <TableHead>Generated</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.length === 0 ? (
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No reports generated yet.
-                      </TableCell>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Summary</TableHead>
+                      <TableHead>
+                        <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('generatedDate')}>
+                          Generated <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    reports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell className="font-medium">#{report.id}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {REPORT_TYPE_LABELS[report.reportType as ReportType] || report.reportType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {report.summary || '—'}
-                        </TableCell>
-                        <TableCell>{formatDate(report.generatedDate)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={exportingId === report.id}
-                              onClick={() => void handleExport(report.id, 'csv')}
-                              aria-label={`Export report #${report.id} as CSV`}
-                            >
-                              <DownloadIcon className="h-4 w-4" />
-                              CSV
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={exportingId === report.id}
-                              onClick={() => void handleExport(report.id, 'pdf')}
-                              aria-label={`Export report #${report.id} as PDF`}
-                            >
-                              <DownloadIcon className="h-4 w-4" />
-                              PDF
-                            </Button>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {reports.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          No reports generated yet.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      sortedReports.map((report) => (
+                        <TableRow key={report.id}>
+                          <TableCell className="font-medium">#{report.id}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {REPORT_TYPE_LABELS[report.reportType as ReportType] || report.reportType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {report.summary || '—'}
+                          </TableCell>
+                          <TableCell>{formatDate(report.generatedDate)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={exportingId === report.id}
+                                onClick={() => void handleExport(report.id, 'csv')}
+                                aria-label={`Export report #${report.id} as CSV`}
+                              >
+                                <DownloadIcon className="h-4 w-4" />
+                                CSV
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={exportingId === report.id}
+                                onClick={() => void handleExport(report.id, 'pdf')}
+                                aria-label={`Export report #${report.id} as PDF`}
+                              >
+                                <DownloadIcon className="h-4 w-4" />
+                                PDF
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card Layout */}
+              <div className="md:hidden space-y-3">
+                {reports.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No reports generated yet.</p>
+                ) : (
+                  sortedReports.map((report) => (
+                    <div key={report.id} className="rounded-md border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">#{report.id}</span>
+                        <Badge variant="outline">
+                          {REPORT_TYPE_LABELS[report.reportType as ReportType] || report.reportType}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Summary:</span> {report.summary || '—'}</p>
+                        <p><span className="text-muted-foreground">Generated:</span> {formatDate(report.generatedDate)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          disabled={exportingId === report.id}
+                          onClick={() => void handleExport(report.id, 'csv')}
+                        >
+                          <DownloadIcon className="h-4 w-4 mr-1" />
+                          CSV
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          disabled={exportingId === report.id}
+                          onClick={() => void handleExport(report.id, 'pdf')}
+                        >
+                          <DownloadIcon className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
 
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">

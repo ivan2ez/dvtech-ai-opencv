@@ -2,6 +2,19 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import * as adminService from '../services/adminService';
 
+export async function getDashboardStatsHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const stats = await adminService.getDashboardStats();
+    res.status(200).json(stats);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getCustomersHandler(
   req: AuthenticatedRequest,
   res: Response,

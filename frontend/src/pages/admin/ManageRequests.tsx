@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckIcon, XIcon, RefreshCwIcon } from 'lucide-react';
+import { CheckIcon, XIcon, RefreshCwIcon, SearchIcon, ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -19,21 +20,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import type { ServiceRequest, ServiceRequestStatus } from '@/types';
 import {
   getServiceRequests,
   approveServiceRequest,
   rejectServiceRequest,
 } from '@/services/serviceRequestApi';
-
-const STATUS_BADGE_CONFIG: Record<ServiceRequestStatus, { label: string; className: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', variant: 'outline' },
-  approved: { label: 'Approved', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-  rejected: { label: 'Rejected', className: '', variant: 'destructive' },
-  assigned: { label: 'Assigned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', variant: 'outline' },
-  'in-progress': { label: 'In Progress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', variant: 'outline' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-};
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'All Statuses' },
@@ -44,15 +37,6 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'in-progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
 ];
-
-function StatusBadge({ status }: { status: ServiceRequestStatus }) {
-  const config = STATUS_BADGE_CONFIG[status];
-  return (
-    <Badge variant={config.variant} className={config.className}>
-      {config.label}
-    </Badge>
-  );
-}
 
 function truncateText(text: string | null, maxLength: number): string {
   if (!text) return '—';
@@ -68,6 +52,8 @@ function formatDate(dateStr: string): string {
   });
 }
 
+type SortDirection = 'asc' | 'desc';
+
 export function ManageRequests() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [pagination, setPagination] = useState({
@@ -79,6 +65,11 @@ export function ManageRequests() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Sorting state
+  const [sortField, setSortField] = useState<'createdAt'>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Reject dialog state
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -105,10 +96,26 @@ export function ManageRequests() {
     void fetchRequests();
   }, [fetchRequests]);
 
-  // Client-side filtering
-  const filteredRequests = statusFilter === 'all'
-    ? requests
-    : requests.filter((r) => r.status === statusFilter);
+  function toggleSort() {
+    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  }
+
+  // Client-side filtering by status and search
+  const filteredRequests = requests
+    .filter((r) => {
+      const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        !query ||
+        r.serviceType.toLowerCase().includes(query) ||
+        (r.acDetails && r.acDetails.toLowerCase().includes(query));
+      return matchesStatus && matchesSearch;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
   async function handleApprove(request: ServiceRequest) {
     setIsSubmitting(true);
@@ -158,23 +165,34 @@ export function ManageRequests() {
         </Button>
       </div>
 
-      {/* Status Filter */}
-      <div className="flex items-center gap-3">
-        <label htmlFor="status-filter" className="text-sm font-medium text-muted-foreground">
-          Filter by status:
-        </label>
-        <select
-          id="status-filter"
-          className="flex h-9 w-48 rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="relative w-full sm:w-64">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search service type or details..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="status-filter" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+            Status:
+          </label>
+          <select
+            id="status-filter"
+            className="flex h-9 w-48 rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -197,68 +215,128 @@ export function ManageRequests() {
 
       {!isLoading && !error && (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Service Type</TableHead>
-                <TableHead>AC Details</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRequests.length === 0 ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No service requests found.
-                  </TableCell>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Service Type</TableHead>
+                  <TableHead>AC Details</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                      onClick={toggleSort}
+                    >
+                      Date
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : (
-                filteredRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">#{request.id}</TableCell>
-                    <TableCell>User #{request.userId}</TableCell>
-                    <TableCell>{request.serviceType}</TableCell>
-                    <TableCell>{truncateText(request.acDetails, 40)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell>{formatDate(request.createdAt)}</TableCell>
-                    <TableCell>
-                      {request.status === 'pending' && (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            disabled={isSubmitting}
-                            onClick={() => void handleApprove(request)}
-                            aria-label={`Approve request #${request.id}`}
-                          >
-                            <CheckIcon data-icon="inline-start" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            disabled={isSubmitting}
-                            onClick={() => handleOpenRejectDialog(request)}
-                            aria-label={`Reject request #${request.id}`}
-                          >
-                            <XIcon data-icon="inline-start" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+              </TableHeader>
+              <TableBody>
+                {filteredRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      No service requests found.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">#{request.id}</TableCell>
+                      <TableCell>{request.user?.name ?? `User #${request.userId}`}</TableCell>
+                      <TableCell>{request.serviceType}</TableCell>
+                      <TableCell>{truncateText(request.acDetails, 40)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={request.status} />
+                      </TableCell>
+                      <TableCell>{formatDate(request.createdAt)}</TableCell>
+                      <TableCell>
+                        {request.status === 'pending' && (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              disabled={isSubmitting}
+                              onClick={() => void handleApprove(request)}
+                              aria-label={`Approve request #${request.id}`}
+                            >
+                              <CheckIcon data-icon="inline-start" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={isSubmitting}
+                              onClick={() => handleOpenRejectDialog(request)}
+                              aria-label={`Reject request #${request.id}`}
+                            >
+                              <XIcon data-icon="inline-start" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-3">
+            {filteredRequests.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No service requests found.</p>
+            ) : (
+              filteredRequests.map((request) => (
+                <Card key={request.id}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">#{request.id}</span>
+                      <StatusBadge status={request.status} />
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <p><span className="text-muted-foreground">Customer:</span> {request.user?.name ?? `User #${request.userId}`}</p>
+                      <p><span className="text-muted-foreground">Service:</span> {request.serviceType}</p>
+                      <p><span className="text-muted-foreground">Details:</span> {truncateText(request.acDetails, 60)}</p>
+                      <p><span className="text-muted-foreground">Date:</span> {formatDate(request.createdAt)}</p>
+                    </div>
+                    {request.status === 'pending' && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                          disabled={isSubmitting}
+                          onClick={() => void handleApprove(request)}
+                        >
+                          <CheckIcon data-icon="inline-start" />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                          disabled={isSubmitting}
+                          onClick={() => handleOpenRejectDialog(request)}
+                        >
+                          <XIcon data-icon="inline-start" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">

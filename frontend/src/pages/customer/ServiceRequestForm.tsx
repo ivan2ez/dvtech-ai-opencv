@@ -9,6 +9,7 @@ import {
   Card,
   CardHeader,
   CardTitle,
+  CardDescription,
   CardContent,
 } from '@/components/ui/card';
 import {
@@ -35,9 +36,9 @@ const serviceRequestSchema = z.object({
 type ServiceRequestFormValues = z.infer<typeof serviceRequestSchema>;
 
 const SERVICE_TYPES = [
-  { value: 'installation', label: 'Installation' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'repair', label: 'Repair' },
+  { value: 'installation', label: 'Installation', placeholder: 'Describe where you want the AC installed (room size, location, preferred brand/type, etc.)' },
+  { value: 'maintenance', label: 'Maintenance', placeholder: 'Describe your AC unit (brand, model, last maintenance date) and any concerns.' },
+  { value: 'repair', label: 'Repair', placeholder: 'Describe the issue — is the AC not cooling? Making noise? Leaking? Include brand/model if known.' },
 ] as const;
 
 export function ServiceRequestForm() {
@@ -55,6 +56,10 @@ export function ServiceRequestForm() {
   });
 
   const acDetailsValue = form.watch('acDetails');
+  const serviceTypeValue = form.watch('serviceType');
+
+  const currentPlaceholder = SERVICE_TYPES.find((t) => t.value === serviceTypeValue)?.placeholder
+    ?? 'Describe your AC unit details (brand, model, issue, location, etc.)';
 
   async function onSubmit(values: ServiceRequestFormValues) {
     setIsSubmitting(true);
@@ -88,19 +93,22 @@ export function ServiceRequestForm() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Submit Service Request</CardTitle>
+          <CardDescription>
+            Tell us about the service you need and we'll get back to you.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {successMessage && (
-            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
               {successMessage}
             </div>
           )}
           {errorMessage && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
               {errorMessage}
             </div>
           )}
@@ -139,7 +147,7 @@ export function ServiceRequestForm() {
                     <FormControl>
                       <textarea
                         className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Describe your AC unit details (brand, model, issue, location, etc.)"
+                        placeholder={currentPlaceholder}
                         maxLength={1000}
                         {...field}
                       />
@@ -154,9 +162,19 @@ export function ServiceRequestForm() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => navigate('/my-requests')}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

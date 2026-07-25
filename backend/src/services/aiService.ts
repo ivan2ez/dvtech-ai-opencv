@@ -3,14 +3,14 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import OpenAI from 'openai';
 import { Op } from 'sequelize';
-import { RoomAssessment, ServiceRequest, BtuFactor, AirconProduct, AiRecommendation } from '../models';
+import { RoomAssessment, BtuFactor, AirconProduct, AiRecommendation } from '../models';
 import { preprocessImage } from './imageService';
 
 // --- Types ---
 
 export interface CreateRoomAssessmentInput {
-  serviceRequestId: number;
   userId: number;
+  serviceRequestId?: number | null;
   area: number;
   ceilingHeight: number;
   occupancy: number;
@@ -151,21 +151,7 @@ export async function createRoomAssessment(
     throw error;
   }
 
-  // 3. Verify service request exists and belongs to the user
-  const serviceRequest = await ServiceRequest.findOne({
-    where: {
-      id: input.serviceRequestId,
-      userId: input.userId,
-    },
-  });
-
-  if (!serviceRequest) {
-    const error = new Error('Service request not found') as Error & { statusCode: number };
-    error.statusCode = 404;
-    throw error;
-  }
-
-  // 4. Handle optional image upload
+  // 3. Handle optional image upload
   let imagePath: string | null = null;
 
   if (input.image) {
@@ -176,9 +162,10 @@ export async function createRoomAssessment(
     imagePath = `uploads/room-images/${filename}`;
   }
 
-  // 5. Create RoomAssessment record
+  // 4. Create RoomAssessment record
   const roomAssessment = await RoomAssessment.create({
-    serviceRequestId: input.serviceRequestId,
+    userId: input.userId,
+    serviceRequestId: input.serviceRequestId || null,
     area: input.area,
     ceilingHeight: input.ceilingHeight,
     occupancy: input.occupancy,

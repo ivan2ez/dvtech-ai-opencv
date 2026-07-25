@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCwIcon, CalendarIcon, UserCheckIcon } from 'lucide-react';
+import { RefreshCwIcon, CalendarIcon, UserCheckIcon, SearchIcon, ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import type {
   ServiceRequest,
   TechnicianSchedule,
@@ -28,14 +31,6 @@ import type {
 } from '@/types';
 import { getServiceRequests } from '@/services/serviceRequestApi';
 import { getSchedules, assignTechnician, getTechnicians } from '@/services/scheduleApi';
-
-const SCHEDULE_STATUS_BADGE: Record<ScheduleStatus, { label: string; className: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  assigned: { label: 'Assigned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', variant: 'outline' },
-  accepted: { label: 'Accepted', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-  rejected: { label: 'Rejected', className: '', variant: 'destructive' },
-  'in-progress': { label: 'In Progress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', variant: 'outline' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-};
 
 const PRIORITY_BADGE: Record<SchedulePriority, { label: string; className: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   low: { label: 'Low', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400', variant: 'outline' },
@@ -49,6 +44,15 @@ const AVAILABILITY_BADGE: Record<string, { label: string; className: string }> =
   unavailable: { label: 'Unavailable', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
 };
 
+const SCHEDULE_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+];
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -60,6 +64,15 @@ function formatDate(dateStr: string): string {
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
+
+const PRIORITY_ORDER: Record<SchedulePriority, number> = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+
+type SortField = 'scheduledDate' | 'priority';
+type SortDirection = 'asc' | 'desc';
 
 export function ManageSchedules() {
   // Approved requests state
@@ -75,9 +88,15 @@ export function ManageSchedules() {
     totalPages: 0,
   });
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+  const [scheduleStatusFilter, setScheduleStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Technicians state
   const [technicians, setTechnicians] = useState<TechnicianInfo[]>([]);
+
+  // Sort state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // General state
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +151,37 @@ export function ManageSchedules() {
     void fetchSchedules();
     void fetchTechnicians();
   }, [fetchApprovedRequests, fetchSchedules, fetchTechnicians]);
+
+  // Filtered schedules by status and search
+  const filteredSchedules = schedules.filter((s) => {
+    const matchesStatus = scheduleStatusFilter === 'all' || s.status === scheduleStatusFilter;
+    const query = searchQuery.toLowerCase();
+    const techName = s.technician?.name?.toLowerCase() ?? '';
+    const serviceType = s.serviceRequest?.serviceType?.toLowerCase() ?? '';
+    const matchesSearch = !query || techName.includes(query) || serviceType.includes(query);
+    return matchesStatus && matchesSearch;
+  });
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }
+
+  const sortedSchedules = [...filteredSchedules].sort((a, b) => {
+    if (!sortField) return 0;
+    const modifier = sortDirection === 'asc' ? 1 : -1;
+    if (sortField === 'scheduledDate') {
+      return (new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()) * modifier;
+    }
+    if (sortField === 'priority') {
+      return (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]) * modifier;
+    }
+    return 0;
+  });
 
   function handleOpenAssignDialog(request: ServiceRequest) {
     setSelectedRequest(request);
@@ -204,54 +254,122 @@ export function ManageSchedules() {
         )}
 
         {!isLoadingRequests && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Service Type</TableHead>
-                <TableHead>AC Details</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Service Type</TableHead>
+                    <TableHead>AC Details</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {approvedRequests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No approved requests awaiting assignment.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    approvedRequests.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">#{request.id}</TableCell>
+                        <TableCell>{request.user?.name ?? `User #${request.userId}`}</TableCell>
+                        <TableCell>{request.serviceType}</TableCell>
+                        <TableCell>{request.acDetails ? request.acDetails.slice(0, 40) : '—'}</TableCell>
+                        <TableCell>{formatDate(request.createdAt)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleOpenAssignDialog(request)}
+                            aria-label={`Assign technician to request #${request.id}`}
+                          >
+                            <UserCheckIcon data-icon="inline-start" />
+                            Assign
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
               {approvedRequests.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No approved requests awaiting assignment.
-                  </TableCell>
-                </TableRow>
+                <p className="text-center text-muted-foreground py-8">No approved requests awaiting assignment.</p>
               ) : (
                 approvedRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">#{request.id}</TableCell>
-                    <TableCell>User #{request.userId}</TableCell>
-                    <TableCell>{request.serviceType}</TableCell>
-                    <TableCell>{request.acDetails ? request.acDetails.slice(0, 40) : '—'}</TableCell>
-                    <TableCell>{formatDate(request.createdAt)}</TableCell>
-                    <TableCell>
+                  <Card key={request.id}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">#{request.id}</span>
+                        <StatusBadge status="approved" />
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Customer:</span> {request.user?.name ?? `User #${request.userId}`}</p>
+                        <p><span className="text-muted-foreground">Service:</span> {request.serviceType}</p>
+                        <p><span className="text-muted-foreground">Details:</span> {request.acDetails ? request.acDetails.slice(0, 60) : '—'}</p>
+                        <p><span className="text-muted-foreground">Date:</span> {formatDate(request.createdAt)}</p>
+                      </div>
                       <Button
                         variant="default"
                         size="sm"
+                        className="w-full"
                         onClick={() => handleOpenAssignDialog(request)}
-                        aria-label={`Assign technician to request #${request.id}`}
                       >
                         <UserCheckIcon data-icon="inline-start" />
-                        Assign
+                        Assign Technician
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </CardContent>
+                  </Card>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </div>
+          </>
         )}
       </section>
 
       {/* Existing Schedules Section */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">All Schedules</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-lg font-semibold">All Schedules</h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="relative w-full sm:w-64">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search technician or service..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="schedule-status-filter" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                Status:
+              </label>
+              <select
+                id="schedule-status-filter"
+                className="flex h-9 w-44 rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                value={scheduleStatusFilter}
+                onChange={(e) => setScheduleStatusFilter(e.target.value)}
+              >
+                {SCHEDULE_STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
         {isLoadingSchedules && (
           <p className="text-muted-foreground py-4">Loading schedules...</p>
@@ -259,54 +377,100 @@ export function ManageSchedules() {
 
         {!isLoadingSchedules && (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Technician</TableHead>
-                  <TableHead>Service Request</TableHead>
-                  <TableHead>Scheduled Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schedules.length === 0 ? (
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No schedules found.
-                    </TableCell>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Technician</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Service Type</TableHead>
+                    <TableHead>
+                      <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('scheduledDate')}>
+                        Scheduled Date <ArrowUpDown className="h-4 w-4" />
+                      </button>
+                    </TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>
+                      <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleSort('priority')}>
+                        Priority <ArrowUpDown className="h-4 w-4" />
+                      </button>
+                    </TableHead>
                   </TableRow>
-                ) : (
-                  schedules.map((schedule) => {
-                    const statusConfig = SCHEDULE_STATUS_BADGE[schedule.status];
-                    const priorityConfig = PRIORITY_BADGE[schedule.priority];
-                    return (
-                      <TableRow key={schedule.id}>
-                        <TableCell className="font-medium">#{schedule.id}</TableCell>
-                        <TableCell>
-                          {schedule.technician?.name ?? `Tech #${schedule.technicianId}`}
-                        </TableCell>
-                        <TableCell>
-                          {schedule.serviceRequest?.serviceType ?? `Request #${schedule.serviceRequestId}`}
-                        </TableCell>
-                        <TableCell>{formatDate(schedule.scheduledDate)}</TableCell>
-                        <TableCell>
-                          <Badge variant={statusConfig.variant} className={statusConfig.className}>
-                            {statusConfig.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
+                </TableHeader>
+                <TableBody>
+                  {filteredSchedules.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No schedules found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedSchedules.map((schedule) => {
+                      const priorityConfig = PRIORITY_BADGE[schedule.priority];
+                      const customerName = schedule.serviceRequest?.user?.name;
+                      return (
+                        <TableRow key={schedule.id}>
+                          <TableCell className="font-medium">#{schedule.id}</TableCell>
+                          <TableCell>
+                            {schedule.technician?.name ?? `Tech #${schedule.technicianId}`}
+                          </TableCell>
+                          <TableCell>
+                            {customerName ?? `User #${schedule.serviceRequest?.userId ?? '—'}`}
+                          </TableCell>
+                          <TableCell>
+                            {schedule.serviceRequest?.serviceType ?? `Request #${schedule.serviceRequestId}`}
+                          </TableCell>
+                          <TableCell>{formatDate(schedule.scheduledDate)}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={schedule.status} />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={priorityConfig.variant} className={priorityConfig.className}>
+                              {priorityConfig.label}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredSchedules.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No schedules found.</p>
+              ) : (
+                sortedSchedules.map((schedule) => {
+                  const priorityConfig = PRIORITY_BADGE[schedule.priority];
+                  const customerName = schedule.serviceRequest?.user?.name;
+                  return (
+                    <Card key={schedule.id}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">#{schedule.id}</span>
+                          <StatusBadge status={schedule.status} />
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <p><span className="text-muted-foreground">Technician:</span> {schedule.technician?.name ?? `Tech #${schedule.technicianId}`}</p>
+                          <p><span className="text-muted-foreground">Customer:</span> {customerName ?? `User #${schedule.serviceRequest?.userId ?? '—'}`}</p>
+                          <p><span className="text-muted-foreground">Service:</span> {schedule.serviceRequest?.serviceType ?? `Request #${schedule.serviceRequestId}`}</p>
+                          <p><span className="text-muted-foreground">Date:</span> {formatDate(schedule.scheduledDate)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <Badge variant={priorityConfig.variant} className={priorityConfig.className}>
                             {priorityConfig.label}
                           </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
 
             {schedulePagination.totalPages > 1 && (
               <div className="flex items-center justify-between pt-4">

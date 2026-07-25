@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PlusIcon, RefreshCwIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -20,26 +19,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import type { ServiceRequest, ServiceRequestStatus } from '@/types';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import type { ServiceRequest } from '@/types';
 import { getServiceRequests } from '@/services/serviceRequestApi';
-
-const STATUS_BADGE_CONFIG: Record<ServiceRequestStatus, { label: string; className: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', variant: 'outline' },
-  approved: { label: 'Approved', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-  rejected: { label: 'Rejected', className: '', variant: 'destructive' },
-  assigned: { label: 'Assigned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', variant: 'outline' },
-  'in-progress': { label: 'In Progress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', variant: 'outline' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-};
-
-function StatusBadge({ status }: { status: ServiceRequestStatus }) {
-  const config = STATUS_BADGE_CONFIG[status];
-  return (
-    <Badge variant={config.variant} className={config.className}>
-      {config.label}
-    </Badge>
-  );
-}
 
 function truncateText(text: string | null, maxLength: number): string {
   if (!text) return '—';
@@ -94,11 +76,11 @@ export function MyRequests() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">My Service Requests</h1>
         <Button onClick={() => navigate('/service-request')}>
-          <PlusIcon data-icon="inline-start" />
+          <PlusIcon className="h-4 w-4 mr-1" />
           New Request
         </Button>
       </div>
@@ -108,7 +90,7 @@ export function MyRequests() {
           <div className="text-center space-y-4">
             <p className="text-destructive">{error}</p>
             <Button variant="outline" onClick={() => void fetchRequests(pagination.page)}>
-              <RefreshCwIcon data-icon="inline-start" />
+              <RefreshCwIcon className="h-4 w-4 mr-1" />
               Retry
             </Button>
           </div>
@@ -123,52 +105,84 @@ export function MyRequests() {
 
       {!isLoading && !error && (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Service Type</TableHead>
-                <TableHead>AC Details</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Submitted</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No service requests found. Submit your first request!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.serviceType}</TableCell>
-                    <TableCell>{truncateText(request.acDetails, 50)}</TableCell>
-                    <TableCell>
+          {requests.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-muted-foreground">No service requests found.</p>
+              <Button onClick={() => navigate('/service-request')}>
+                Submit Your First Request
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table view */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Service Type</TableHead>
+                      <TableHead>AC Details</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date Submitted</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {requests.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium capitalize">{request.serviceType}</TableCell>
+                        <TableCell>{truncateText(request.acDetails, 50)}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={request.status} />
+                        </TableCell>
+                        <TableCell>{formatDate(request.createdAt)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(request)}
+                            aria-label={`View details for request #${request.id}`}
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-3">
+                {requests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="rounded-lg border p-4 space-y-3 cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={() => handleViewDetails(request)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View details for ${request.serviceType} request`}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleViewDetails(request); }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium capitalize">{request.serviceType}</span>
                       <StatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell>{formatDate(request.createdAt)}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleViewDetails(request)}
-                        aria-label={`View details for request #${request.id}`}
-                      >
-                        <EyeIcon />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {truncateText(request.acDetails, 80)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(request.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-muted-foreground">
-                Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalItems} total)
+                Page {pagination.page} of {pagination.totalPages} ({pagination.totalItems} total)
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -203,7 +217,7 @@ export function MyRequests() {
             <div className="space-y-4">
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3">
                 <span className="text-muted-foreground font-medium">Service Type</span>
-                <span>{selectedRequest.serviceType}</span>
+                <span className="capitalize">{selectedRequest.serviceType}</span>
 
                 <span className="text-muted-foreground font-medium">Status</span>
                 <span>

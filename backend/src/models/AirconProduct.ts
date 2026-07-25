@@ -8,6 +8,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { AiRecommendation } from './AiRecommendation';
+import { ProductImage } from './ProductImage';
 
 @Table({
   tableName: 'aircon_products',
@@ -91,4 +92,7 @@ export class AirconProduct extends Model {
   // Associations
   @HasMany(() => AiRecommendation, 'productId')
   declare aiRecommendations: AiRecommendation[];
+
+  @HasMany(() => ProductImage, 'productId')
+  declare images: ProductImage[];
 }

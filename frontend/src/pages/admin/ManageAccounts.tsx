@@ -2,17 +2,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PlusIcon, PencilIcon, BanIcon } from 'lucide-react';
+import { PlusIcon, PencilIcon, BanIcon, SearchIcon, RefreshCwIcon, ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -81,6 +83,10 @@ const editTechnicianSchema = z.object({
 type CreateTechnicianFormValues = z.infer<typeof createTechnicianSchema>;
 type EditTechnicianFormValues = z.infer<typeof editTechnicianSchema>;
 
+type CustomerSortField = 'name' | 'createdAt';
+type TechSortField = 'name' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 // --- Component ---
 
 export function ManageAccounts() {
@@ -93,15 +99,32 @@ export function ManageAccounts() {
     totalPages: 0,
   });
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
 
   // Technician state
   const [technicians, setTechnicians] = useState<TechnicianAccount[]>([]);
   const [isLoadingTechnicians, setIsLoadingTechnicians] = useState(false);
+  const [technicianSearch, setTechnicianSearch] = useState('');
+
+  // Error state
+  const [error, setError] = useState<string | null>(null);
+
+  // Sort state - customers
+  const [customerSortField, setCustomerSortField] = useState<CustomerSortField | null>(null);
+  const [customerSortDirection, setCustomerSortDirection] = useState<SortDirection>('asc');
+
+  // Sort state - technicians
+  const [techSortField, setTechSortField] = useState<TechSortField | null>(null);
+  const [techSortDirection, setTechSortDirection] = useState<SortDirection>('asc');
 
   // Dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTechnician, setEditingTechnician] = useState<TechnicianAccount | null>(null);
+
+  // Confirm deactivate dialog state
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [deactivatingAccount, setDeactivatingAccount] = useState<{ id: number; name: string; type: 'customer' | 'technician' } | null>(null);
 
   // Forms
   const createForm = useForm<CreateTechnicianFormValues>({
@@ -129,12 +152,14 @@ export function ManageAccounts() {
 
   const fetchCustomers = useCallback(async (page = 1) => {
     setIsLoadingCustomers(true);
+    setError(null);
     try {
       const response = await getCustomers({ page, pageSize: 20 });
       setCustomers(response.data);
       setCustomerPagination(response.pagination);
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+      setError('Failed to load customers. Please try again.');
     } finally {
       setIsLoadingCustomers(false);
     }
@@ -142,11 +167,13 @@ export function ManageAccounts() {
 
   const fetchTechnicians = useCallback(async () => {
     setIsLoadingTechnicians(true);
+    setError(null);
     try {
       const response = await getTechnicians();
       setTechnicians(response);
-    } catch (error) {
-      console.error('Failed to fetch technicians:', error);
+    } catch (err) {
+      console.error('Failed to fetch technicians:', err);
+      setError('Failed to load technicians. Please try again.');
     } finally {
       setIsLoadingTechnicians(false);
     }
@@ -157,16 +184,64 @@ export function ManageAccounts() {
     void fetchTechnicians();
   }, [fetchCustomers, fetchTechnicians]);
 
+  // Filtered lists
+  const filteredCustomers = customers.filter((c) => {
+    const query = customerSearch.toLowerCase();
+    return !query || c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query);
+  });
+
+  const filteredTechnicians = technicians.filter((t) => {
+    const query = technicianSearch.toLowerCase();
+    return !query || t.name.toLowerCase().includes(query) || t.email.toLowerCase().includes(query);
+  });
+
+  function toggleCustomerSort(field: CustomerSortField) {
+    if (customerSortField === field) {
+      setCustomerSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setCustomerSortField(field);
+      setCustomerSortDirection('asc');
+    }
+  }
+
+  function toggleTechSort(field: TechSortField) {
+    if (techSortField === field) {
+      setTechSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTechSortField(field);
+      setTechSortDirection('asc');
+    }
+  }
+
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    if (!customerSortField) return 0;
+    const modifier = customerSortDirection === 'asc' ? 1 : -1;
+    if (customerSortField === 'name') {
+      return a.name.localeCompare(b.name) * modifier;
+    }
+    if (customerSortField === 'createdAt') {
+      return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * modifier;
+    }
+    return 0;
+  });
+
+  const sortedTechnicians = [...filteredTechnicians].sort((a, b) => {
+    if (!techSortField) return 0;
+    const modifier = techSortDirection === 'asc' ? 1 : -1;
+    if (techSortField === 'name') {
+      return a.name.localeCompare(b.name) * modifier;
+    }
+    if (techSortField === 'createdAt') {
+      return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * modifier;
+    }
+    return 0;
+  });
+
   // --- Customer Actions ---
 
-  async function handleDeactivateCustomer(id: number) {
-    if (!window.confirm('Are you sure you want to deactivate this customer account?')) return;
-    try {
-      await deactivateCustomer(id);
-      await fetchCustomers(customerPagination.page);
-    } catch (error) {
-      console.error('Failed to deactivate customer:', error);
-    }
+  function handleOpenDeactivateCustomer(customer: CustomerAccount) {
+    setDeactivatingAccount({ id: customer.id, name: customer.name, type: 'customer' });
+    setDeactivateDialogOpen(true);
   }
 
   // --- Technician Actions ---
@@ -193,13 +268,26 @@ export function ManageAccounts() {
     setEditDialogOpen(true);
   }
 
-  async function handleDeactivateTechnician(id: number) {
-    if (!window.confirm('Are you sure you want to deactivate this technician account?')) return;
+  function handleOpenDeactivateTechnician(technician: TechnicianAccount) {
+    setDeactivatingAccount({ id: technician.id, name: technician.name, type: 'technician' });
+    setDeactivateDialogOpen(true);
+  }
+
+  async function handleConfirmDeactivate() {
+    if (!deactivatingAccount) return;
     try {
-      await deactivateTechnician(id);
-      await fetchTechnicians();
-    } catch (error) {
-      console.error('Failed to deactivate technician:', error);
+      if (deactivatingAccount.type === 'customer') {
+        await deactivateCustomer(deactivatingAccount.id);
+        await fetchCustomers(customerPagination.page);
+      } else {
+        await deactivateTechnician(deactivatingAccount.id);
+        await fetchTechnicians();
+      }
+      setDeactivateDialogOpen(false);
+      setDeactivatingAccount(null);
+    } catch (err) {
+      console.error('Failed to deactivate account:', err);
+      setError('Failed to deactivate account. Please try again.');
     }
   }
 
@@ -215,8 +303,9 @@ export function ManageAccounts() {
       await createTechnician(data);
       setCreateDialogOpen(false);
       await fetchTechnicians();
-    } catch (error) {
-      console.error('Failed to create technician:', error);
+    } catch (err) {
+      console.error('Failed to create technician:', err);
+      setError('Failed to create technician. Please try again.');
     }
   }
 
@@ -232,8 +321,9 @@ export function ManageAccounts() {
       await updateTechnician(editingTechnician.id, data);
       setEditDialogOpen(false);
       await fetchTechnicians();
-    } catch (error) {
-      console.error('Failed to update technician:', error);
+    } catch (err) {
+      console.error('Failed to update technician:', err);
+      setError('Failed to update technician. Please try again.');
     }
   }
 
@@ -264,6 +354,18 @@ export function ManageAccounts() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Manage Accounts</h1>
 
+      {error && (
+        <div className="flex items-center justify-center py-6">
+          <div className="text-center space-y-4">
+            <p className="text-destructive">{error}</p>
+            <Button variant="outline" onClick={() => { setError(null); void fetchCustomers(customerPagination.page); void fetchTechnicians(); }}>
+              <RefreshCwIcon data-icon="inline-start" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="customers">
         <TabsList>
           <TabsTrigger value="customers">Customers</TabsTrigger>
@@ -273,57 +375,113 @@ export function ManageAccounts() {
         {/* Customers Tab */}
         <TabsContent value="customers">
           <div className="space-y-4">
+            {/* Search */}
+            <div className="relative w-full sm:w-64">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search name or email..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
             {isLoadingCustomers ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">Loading customers...</p>
               </div>
             ) : (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers.length === 0 ? (
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          No customers found.
-                        </TableCell>
+                        <TableHead>
+                          <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleCustomerSort('name')}>
+                            Name <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>
+                          <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleCustomerSort('createdAt')}>
+                            Created <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ) : (
-                      customers.map((customer) => (
-                        <TableRow key={customer.id}>
-                          <TableCell className="font-medium">{customer.name}</TableCell>
-                          <TableCell>{customer.email}</TableCell>
-                          <TableCell>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCustomers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            No customers found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        sortedCustomers.map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell className="font-medium">{customer.name}</TableCell>
+                            <TableCell>{customer.email}</TableCell>
+                            <TableCell>
+                              <Badge variant={customer.isActive ? 'default' : 'secondary'}>
+                                {customer.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(customer.createdAt)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={!customer.isActive}
+                                onClick={() => handleOpenDeactivateCustomer(customer)}
+                                aria-label={`Deactivate ${customer.name}`}
+                              >
+                                <BanIcon className="h-4 w-4 mr-1" />
+                                Deactivate
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {filteredCustomers.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No customers found.</p>
+                  ) : (
+                    sortedCustomers.map((customer) => (
+                      <Card key={customer.id}>
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{customer.name}</span>
                             <Badge variant={customer.isActive ? 'default' : 'secondary'}>
                               {customer.isActive ? 'Active' : 'Inactive'}
                             </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(customer.createdAt)}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              disabled={!customer.isActive}
-                              onClick={() => void handleDeactivateCustomer(customer.id)}
-                              aria-label={`Deactivate ${customer.name}`}
-                            >
-                              <BanIcon className="h-4 w-4 mr-1" />
-                              Deactivate
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <p><span className="text-muted-foreground">Email:</span> {customer.email}</p>
+                            <p><span className="text-muted-foreground">Created:</span> {formatDate(customer.createdAt)}</p>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full"
+                            disabled={!customer.isActive}
+                            onClick={() => handleOpenDeactivateCustomer(customer)}
+                          >
+                            <BanIcon className="h-4 w-4 mr-1" />
+                            Deactivate
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
 
                 {customerPagination.totalPages > 1 && (
                   <div className="flex items-center justify-between pt-4">
@@ -358,7 +516,17 @@ export function ManageAccounts() {
         {/* Technicians Tab */}
         <TabsContent value="technicians">
           <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              {/* Search */}
+              <div className="relative w-full sm:w-64">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search name or email..."
+                  value={technicianSearch}
+                  onChange={(e) => setTechnicianSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                 <DialogTrigger render={<Button onClick={handleOpenCreateTechnician} />}>
                   <PlusIcon data-icon="inline-start" />
@@ -456,68 +624,135 @@ export function ManageAccounts() {
                 <p className="text-muted-foreground">Loading technicians...</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Specialization</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Availability</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {technicians.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No technicians found.
-                      </TableCell>
-                    </TableRow>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>
+                          <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleTechSort('name')}>
+                            Name <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Specialization</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Availability</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>
+                          <button type="button" className="inline-flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleTechSort('createdAt')}>
+                            Created <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTechnicians.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                            No technicians found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        sortedTechnicians.map((technician) => (
+                          <TableRow key={technician.id}>
+                            <TableCell className="font-medium">{technician.name}</TableCell>
+                            <TableCell>{technician.email}</TableCell>
+                            <TableCell>{technician.technicianDetail?.specialization ?? '—'}</TableCell>
+                            <TableCell>{technician.technicianDetail?.contactNumber ?? '—'}</TableCell>
+                            <TableCell>
+                              <Badge variant={getAvailabilityBadgeVariant(technician.technicianDetail?.availabilityStatus ?? 'unavailable')}>
+                                {technician.technicianDetail?.availabilityStatus ?? 'N/A'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={technician.isActive ? 'default' : 'secondary'}>
+                                {technician.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(technician.createdAt)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => handleOpenEditTechnician(technician)}
+                                  aria-label={`Edit ${technician.name}`}
+                                >
+                                  <PencilIcon />
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="icon-sm"
+                                  disabled={!technician.isActive}
+                                  onClick={() => handleOpenDeactivateTechnician(technician)}
+                                  aria-label={`Deactivate ${technician.name}`}
+                                >
+                                  <BanIcon />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {filteredTechnicians.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No technicians found.</p>
                   ) : (
-                    technicians.map((technician) => (
-                      <TableRow key={technician.id}>
-                        <TableCell className="font-medium">{technician.name}</TableCell>
-                        <TableCell>{technician.email}</TableCell>
-                        <TableCell>{technician.technicianDetail?.specialization ?? '—'}</TableCell>
-                        <TableCell>{technician.technicianDetail?.contactNumber ?? '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant={getAvailabilityBadgeVariant(technician.technicianDetail?.availabilityStatus ?? 'unavailable')}>
-                            {technician.technicianDetail?.availabilityStatus ?? 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={technician.isActive ? 'default' : 'secondary'}>
-                            {technician.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
+                    sortedTechnicians.map((technician) => (
+                      <Card key={technician.id}>
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{technician.name}</span>
+                            <Badge variant={technician.isActive ? 'default' : 'secondary'}>
+                              {technician.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <p><span className="text-muted-foreground">Email:</span> {technician.email}</p>
+                            <p><span className="text-muted-foreground">Specialization:</span> {technician.technicianDetail?.specialization ?? '—'}</p>
+                            <p><span className="text-muted-foreground">Contact:</span> {technician.technicianDetail?.contactNumber ?? '—'}</p>
+                            <p>
+                              <span className="text-muted-foreground">Availability:</span>{' '}
+                              <Badge variant={getAvailabilityBadgeVariant(technician.technicianDetail?.availabilityStatus ?? 'unavailable')} className="ml-1">
+                                {technician.technicianDetail?.availabilityStatus ?? 'N/A'}
+                              </Badge>
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
                             <Button
-                              variant="ghost"
-                              size="icon-sm"
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
                               onClick={() => handleOpenEditTechnician(technician)}
-                              aria-label={`Edit ${technician.name}`}
                             >
-                              <PencilIcon />
+                              <PencilIcon className="h-4 w-4 mr-1" />
+                              Edit
                             </Button>
                             <Button
                               variant="destructive"
-                              size="icon-sm"
+                              size="sm"
+                              className="flex-1"
                               disabled={!technician.isActive}
-                              onClick={() => void handleDeactivateTechnician(technician.id)}
-                              aria-label={`Deactivate ${technician.name}`}
+                              onClick={() => handleOpenDeactivateTechnician(technician)}
                             >
-                              <BanIcon />
+                              <BanIcon className="h-4 w-4 mr-1" />
+                              Deactivate
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </CardContent>
+                      </Card>
                     ))
                   )}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
 
             {/* Edit Technician Dialog */}
@@ -597,6 +832,36 @@ export function ManageAccounts() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Deactivate Confirmation Dialog */}
+      <Dialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Deactivation</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to deactivate the {deactivatingAccount?.type} account for{' '}
+            <span className="font-medium text-foreground">
+              {deactivatingAccount?.name}
+            </span>
+            ? They will no longer be able to access the system.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeactivateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleConfirmDeactivate()}
+            >
+              Deactivate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

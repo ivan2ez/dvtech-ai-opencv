@@ -8,6 +8,7 @@ import {
   Card,
   CardHeader,
   CardTitle,
+  CardDescription,
   CardContent,
 } from '@/components/ui/card';
 import {
@@ -26,10 +27,6 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 const roomAssessmentSchema = z.object({
-  serviceRequestId: z
-    .number({ required_error: 'Service Request ID is required', invalid_type_error: 'Must be a number' })
-    .int('Must be a whole number')
-    .positive('Must be a positive number'),
   area: z
     .number({ required_error: 'Area is required', invalid_type_error: 'Must be a number' })
     .min(1, 'Area must be at least 1 sq meter')
@@ -51,9 +48,9 @@ const roomAssessmentSchema = z.object({
 type RoomAssessmentFormValues = z.infer<typeof roomAssessmentSchema>;
 
 const SUNLIGHT_LEVELS = [
-  { value: 'low', label: 'Low' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'high', label: 'High' },
+  { value: 'low', label: 'Low — shaded, minimal direct sunlight' },
+  { value: 'moderate', label: 'Moderate — some direct sunlight during the day' },
+  { value: 'high', label: 'High — heavy sun exposure most of the day' },
 ] as const;
 
 export function AiRecommendation() {
@@ -68,7 +65,6 @@ export function AiRecommendation() {
   const form = useForm<RoomAssessmentFormValues>({
     resolver: zodResolver(roomAssessmentSchema) as unknown as Resolver<RoomAssessmentFormValues>,
     defaultValues: {
-      serviceRequestId: undefined,
       area: undefined,
       ceilingHeight: undefined,
       occupancy: undefined,
@@ -131,45 +127,28 @@ export function AiRecommendation() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">AI Room Assessment & Recommendation</CardTitle>
+          <CardDescription>
+            Fill in your room details and our AI will recommend the best AC unit for your space.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {errorMessage && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
               {errorMessage}
             </div>
           )}
           {successMessage && !result && (
-            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
               {successMessage}
             </div>
           )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <FormField
-                control={form.control}
-                name="serviceRequestId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Request ID</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Enter your service request ID"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="area"
@@ -179,7 +158,7 @@ export function AiRecommendation() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="1 - 1000"
+                        placeholder="e.g. 25"
                         step="0.1"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -200,7 +179,7 @@ export function AiRecommendation() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="1 - 10"
+                        placeholder="e.g. 2.7"
                         step="0.1"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -221,7 +200,7 @@ export function AiRecommendation() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="1 - 500"
+                        placeholder="e.g. 4"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         value={field.value ?? ''}
@@ -259,6 +238,9 @@ export function AiRecommendation() {
                 <label className="text-sm font-medium leading-none" htmlFor="room-image">
                   Room Image (optional)
                 </label>
+                <p className="text-xs text-muted-foreground">
+                  Upload a photo of your room for more accurate AI analysis.
+                </p>
                 <Input
                   id="room-image"
                   ref={fileInputRef}
@@ -291,7 +273,7 @@ export function AiRecommendation() {
             <CardTitle className="text-xl">AI Recommendation Result</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
               {successMessage}
             </div>
 

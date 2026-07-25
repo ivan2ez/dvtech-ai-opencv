@@ -10,10 +10,14 @@ import {
   FileText,
   CalendarDays,
   Box,
+  Tag,
+  Wrench,
   Thermometer,
   Users,
   BarChart3,
   ClipboardList,
+  BrainCircuit,
+  MessageCircle,
   PanelLeft,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -24,12 +28,23 @@ interface SidebarLink {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+function getCustomerLinks(): SidebarLink[] {
+  return [
+    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'My Requests', to: '/my-requests', icon: FileText },
+    { label: 'AI Recommendation', to: '/ai-recommendation', icon: BrainCircuit },
+    { label: 'Chat', to: '/chat', icon: MessageCircle },
+  ];
+}
+
 function getAdminLinks(): SidebarLink[] {
   return [
     { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
     { label: 'Manage Requests', to: '/admin/requests', icon: FileText },
     { label: 'Manage Schedules', to: '/admin/schedules', icon: CalendarDays },
     { label: 'Manage Products', to: '/admin/products', icon: Box },
+    { label: 'Manage Brands', to: '/admin/brands', icon: Tag },
+    { label: 'Manage Services', to: '/admin/services', icon: Wrench },
     { label: 'BTU Factors', to: '/admin/btu-factors', icon: Thermometer },
     { label: 'Manage Accounts', to: '/admin/accounts', icon: Users },
     { label: 'Reports', to: '/admin/reports', icon: BarChart3 },
@@ -45,6 +60,8 @@ function getTechnicianLinks(): SidebarLink[] {
 
 function getSidebarLinks(role: UserRole | null): SidebarLink[] {
   switch (role) {
+    case 'customer':
+      return getCustomerLinks();
     case 'admin':
       return getAdminLinks();
     case 'technician':
@@ -56,7 +73,7 @@ function getSidebarLinks(role: UserRole | null): SidebarLink[] {
 
 function isLinkActive(linkTo: string, pathname: string): boolean {
   // Exact match for dashboard roots, prefix match for sub-pages
-  if (linkTo === '/admin' || linkTo === '/technician') {
+  if (linkTo === '/admin' || linkTo === '/technician' || linkTo === '/dashboard') {
     return pathname === linkTo;
   }
   return pathname.startsWith(linkTo);
@@ -110,7 +127,7 @@ export function Sidebar() {
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r bg-background">
         <div className="flex h-14 items-center px-4 border-b">
           <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {user?.role === 'admin' ? 'Admin Panel' : 'Technician Panel'}
+            {user?.role === 'admin' ? 'Admin Panel' : user?.role === 'customer' ? 'Customer Panel' : 'Technician Panel'}
           </span>
         </div>
         <SidebarNav links={links} pathname={location.pathname} />
@@ -132,7 +149,7 @@ export function Sidebar() {
           <SheetContent side="left" className="w-64 p-0">
             <div className="flex h-14 items-center px-4 border-b">
               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                {user?.role === 'admin' ? 'Admin Panel' : 'Technician Panel'}
+                {user?.role === 'admin' ? 'Admin Panel' : user?.role === 'customer' ? 'Customer Panel' : 'Technician Panel'}
               </span>
             </div>
             <Separator />

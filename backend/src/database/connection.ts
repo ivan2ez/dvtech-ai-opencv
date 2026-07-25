@@ -5,6 +5,8 @@ import { ServiceRequest } from '../models/ServiceRequest';
 import { RoomAssessment } from '../models/RoomAssessment';
 import { AiRecommendation } from '../models/AiRecommendation';
 import { AirconProduct } from '../models/AirconProduct';
+import { ProductImage } from '../models/ProductImage';
+import { Brand } from '../models/Brand';
 import { TechnicianDetail } from '../models/TechnicianDetail';
 import { TechnicianSchedule } from '../models/TechnicianSchedule';
 import { BtuFactor } from '../models/BtuFactor';
@@ -21,6 +23,8 @@ const sequelize = new Sequelize({
     RoomAssessment,
     AiRecommendation,
     AirconProduct,
+    ProductImage,
+    Brand,
     TechnicianDetail,
     TechnicianSchedule,
     BtuFactor,

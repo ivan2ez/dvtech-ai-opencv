@@ -1,5 +1,5 @@
 import api from './api';
-import type { ServiceRequest, ServiceRequestFormData, PaginatedResponse } from '../types';
+import type { ServiceRequest, ServiceRequestFormData, PaginatedResponse, BackendPaginatedResponse } from '../types';
 
 export async function createServiceRequest(data: ServiceRequestFormData): Promise<ServiceRequest> {
   const response = await api.post<ServiceRequest>('/service-requests', data);
@@ -10,8 +10,17 @@ export async function getServiceRequests(params?: {
   page?: number;
   pageSize?: number;
 }): Promise<PaginatedResponse<ServiceRequest>> {
-  const response = await api.get<PaginatedResponse<ServiceRequest>>('/service-requests', { params });
-  return response.data;
+  const response = await api.get<BackendPaginatedResponse<ServiceRequest>>('/service-requests', { params });
+  const raw = response.data;
+  return {
+    data: raw.data,
+    pagination: {
+      page: raw.page,
+      pageSize: raw.pageSize,
+      totalItems: raw.total,
+      totalPages: raw.totalPages,
+    },
+  };
 }
 
 export async function getServiceRequestById(id: number): Promise<ServiceRequest> {

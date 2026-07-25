@@ -29,3 +29,36 @@ export async function updateProduct(id: number, data: ProductFormData): Promise<
 export async function deleteProduct(id: number): Promise<void> {
   await api.delete(`/products/${id}`);
 }
+
+// --- Product Images ---
+
+export interface ProductImageData {
+  id: number;
+  productId: number;
+  imageUrl: string;
+  isCover: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export async function getProductImages(productId: number): Promise<ProductImageData[]> {
+  const response = await api.get<{ images: ProductImageData[] }>(`/products/${productId}/images`);
+  return response.data.images;
+}
+
+export async function uploadProductImages(productId: number, files: File[]): Promise<ProductImageData[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('images', file));
+  const response = await api.post<{ images: ProductImageData[] }>(`/products/${productId}/images`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.images;
+}
+
+export async function setCoverImage(productId: number, imageId: number): Promise<void> {
+  await api.patch(`/products/${productId}/images/${imageId}/cover`);
+}
+
+export async function deleteProductImage(productId: number, imageId: number): Promise<void> {
+  await api.delete(`/products/${productId}/images/${imageId}`);
+}

@@ -4,6 +4,8 @@ import sequelize from '../connection';
 import {
   User,
   AirconProduct,
+  ProductImage,
+  Brand,
   ServiceType,
   BtuFactor,
   ServiceRequest,
@@ -53,19 +55,73 @@ async function seed() {
     console.log(`Seeded ${serviceTypes.length} service types.`);
 
     // ─── 3. AIRCON PRODUCTS ─────────────────────────────────────────────────────
+    // First, seed brands
+    const brands = await Brand.bulkCreate([
+      { name: 'Carrier', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Carrier', isActive: true },
+      { name: 'Panasonic', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Panasonic', isActive: true },
+      { name: 'Samsung', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Samsung', isActive: true },
+      { name: 'LG', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=LG', isActive: true },
+      { name: 'Daikin', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Daikin', isActive: true },
+      { name: 'Condura', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Condura', isActive: true },
+      { name: 'Kolin', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Kolin', isActive: true },
+      { name: 'Sharp', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Sharp', isActive: true },
+      { name: 'Midea', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=Midea', isActive: true },
+      { name: 'TCL', logoUrl: 'https://placehold.co/100x100/e2e8f0/475569?text=TCL', isActive: true },
+    ]);
+    console.log(`Seeded ${brands.length} brands.`);
+
     const products = await AirconProduct.bulkCreate([
-      { brand: 'Carrier', model: 'Crystal 2 Inverter', type: 'Window', horsepower: 1.0, btuCapacity: 9000, price: 22990.00, description: 'Energy-efficient window-type inverter AC with R32 refrigerant.', imageUrl: null, isActive: true },
-      { brand: 'Carrier', model: 'Alpha Inverter', type: 'Split', horsepower: 1.5, btuCapacity: 12000, price: 36990.00, description: 'Premium split-type inverter for medium-sized rooms.', imageUrl: null, isActive: true },
-      { brand: 'Panasonic', model: 'CS-S10VKQ', type: 'Split', horsepower: 1.0, btuCapacity: 9500, price: 28990.00, description: 'Nanoe-X split-type with air purification technology.', imageUrl: null, isActive: true },
-      { brand: 'Panasonic', model: 'CS-S18VKQ', type: 'Split', horsepower: 2.0, btuCapacity: 18000, price: 48990.00, description: 'High-capacity split-type for large rooms and offices.', imageUrl: null, isActive: true },
-      { brand: 'Samsung', model: 'Wind-Free AR9500T', type: 'Split', horsepower: 1.5, btuCapacity: 12000, price: 39990.00, description: 'Wind-Free cooling with AI auto mode.', imageUrl: null, isActive: true },
-      { brand: 'LG', model: 'Dual Inverter S4-Q12JA3QG', type: 'Split', horsepower: 1.5, btuCapacity: 12000, price: 34990.00, description: 'Dual inverter compressor with 10-year warranty.', imageUrl: null, isActive: true },
-      { brand: 'Daikin', model: 'FTV35BXV1', type: 'Split', horsepower: 1.5, btuCapacity: 11900, price: 32990.00, description: 'Reliable non-inverter split-type with Comfort Cooling mode.', imageUrl: null, isActive: true },
-      { brand: 'Condura', model: 'FP-51KMF010', type: 'Window', horsepower: 0.75, btuCapacity: 7500, price: 14990.00, description: 'Budget-friendly window-type for small bedrooms.', imageUrl: null, isActive: true },
-      { brand: 'Kolin', model: 'KAG-150HME4', type: 'Window', horsepower: 1.5, btuCapacity: 12000, price: 18990.00, description: 'Inverter-grade window-type with timer function.', imageUrl: null, isActive: true },
-      { brand: 'Sharp', model: 'AH-X12VEV', type: 'Split', horsepower: 1.5, btuCapacity: 12000, price: 31990.00, description: 'Plasmacluster split-type with self-cleaning function.', imageUrl: null, isActive: true },
+      { brand: 'Carrier', model: 'Crystal 2 Inverter', type: 'window-type', horsepower: 1.0, btuCapacity: 9000, price: 22990.00, description: 'Energy-efficient window-type inverter AC with R32 refrigerant.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Carrier+Crystal+2', isActive: true },
+      { brand: 'Carrier', model: 'Alpha Inverter', type: 'split-type', horsepower: 1.5, btuCapacity: 12000, price: 36990.00, description: 'Premium split-type inverter for medium-sized rooms.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Carrier+Alpha', isActive: true },
+      { brand: 'Panasonic', model: 'CS-S10VKQ', type: 'split-type', horsepower: 1.0, btuCapacity: 9500, price: 28990.00, description: 'Nanoe-X split-type with air purification technology.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Panasonic+CS-S10VKQ', isActive: true },
+      { brand: 'Panasonic', model: 'CS-S18VKQ', type: 'split-type', horsepower: 2.0, btuCapacity: 18000, price: 48990.00, description: 'High-capacity split-type for large rooms and offices.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Panasonic+CS-S18VKQ', isActive: true },
+      { brand: 'Samsung', model: 'Wind-Free AR9500T', type: 'split-type', horsepower: 1.5, btuCapacity: 12000, price: 39990.00, description: 'Wind-Free cooling with AI auto mode.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Samsung+Wind-Free', isActive: true },
+      { brand: 'LG', model: 'Dual Inverter S4-Q12JA3QG', type: 'split-type', horsepower: 1.5, btuCapacity: 12000, price: 34990.00, description: 'Dual inverter compressor with 10-year warranty.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=LG+Dual+Inverter', isActive: true },
+      { brand: 'Daikin', model: 'FTV35BXV1', type: 'split-type', horsepower: 1.5, btuCapacity: 11900, price: 32990.00, description: 'Reliable non-inverter split-type with Comfort Cooling mode.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Daikin+FTV35BXV1', isActive: true },
+      { brand: 'Condura', model: 'FP-51KMF010', type: 'window-type', horsepower: 0.75, btuCapacity: 7500, price: 14990.00, description: 'Budget-friendly window-type for small bedrooms.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Condura+FP-51KMF', isActive: true },
+      { brand: 'Kolin', model: 'KAG-150HME4', type: 'window-type', horsepower: 1.5, btuCapacity: 12000, price: 18990.00, description: 'Inverter-grade window-type with timer function.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Kolin+KAG-150', isActive: true },
+      { brand: 'Sharp', model: 'AH-X12VEV', type: 'split-type', horsepower: 1.5, btuCapacity: 12000, price: 31990.00, description: 'Plasmacluster split-type with self-cleaning function.', imageUrl: 'https://placehold.co/400x300/e2e8f0/475569?text=Sharp+AH-X12VEV', isActive: true },
     ]);
     console.log(`Seeded ${products.length} aircon products.`);
+
+    // ─── 3b. PRODUCT IMAGES ──────────────────────────────────────────────────────
+    const productImages = await ProductImage.bulkCreate([
+      // Carrier Crystal 2 Inverter (product 1) - 3 images
+      { productId: 1, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Crystal+2+Front', isCover: true, sortOrder: 0 },
+      { productId: 1, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Crystal+2+Side', isCover: false, sortOrder: 1 },
+      { productId: 1, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Crystal+2+Installed', isCover: false, sortOrder: 2 },
+      // Carrier Alpha Inverter (product 2) - 3 images
+      { productId: 2, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Alpha+Front', isCover: true, sortOrder: 0 },
+      { productId: 2, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Alpha+Side', isCover: false, sortOrder: 1 },
+      { productId: 2, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Carrier+Alpha+Remote', isCover: false, sortOrder: 2 },
+      // Panasonic CS-S10VKQ (product 3) - 2 images
+      { productId: 3, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Panasonic+S10+Front', isCover: true, sortOrder: 0 },
+      { productId: 3, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Panasonic+S10+Angle', isCover: false, sortOrder: 1 },
+      // Panasonic CS-S18VKQ (product 4) - 2 images
+      { productId: 4, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Panasonic+S18+Front', isCover: true, sortOrder: 0 },
+      { productId: 4, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Panasonic+S18+Installed', isCover: false, sortOrder: 1 },
+      // Samsung Wind-Free (product 5) - 3 images
+      { productId: 5, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Samsung+WindFree+Front', isCover: true, sortOrder: 0 },
+      { productId: 5, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Samsung+WindFree+Side', isCover: false, sortOrder: 1 },
+      { productId: 5, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Samsung+WindFree+Display', isCover: false, sortOrder: 2 },
+      // LG Dual Inverter (product 6) - 2 images
+      { productId: 6, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=LG+Dual+Inverter+Front', isCover: true, sortOrder: 0 },
+      { productId: 6, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=LG+Dual+Inverter+Room', isCover: false, sortOrder: 1 },
+      // Daikin FTV35BXV1 (product 7) - 2 images
+      { productId: 7, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Daikin+FTV35+Front', isCover: true, sortOrder: 0 },
+      { productId: 7, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Daikin+FTV35+Side', isCover: false, sortOrder: 1 },
+      // Condura (product 8) - 2 images
+      { productId: 8, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Condura+Window+Front', isCover: true, sortOrder: 0 },
+      { productId: 8, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Condura+Window+Back', isCover: false, sortOrder: 1 },
+      // Kolin (product 9) - 2 images
+      { productId: 9, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Kolin+KAG+Front', isCover: true, sortOrder: 0 },
+      { productId: 9, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Kolin+KAG+Panel', isCover: false, sortOrder: 1 },
+      // Sharp (product 10) - 3 images
+      { productId: 10, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Sharp+AH-X12+Front', isCover: true, sortOrder: 0 },
+      { productId: 10, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Sharp+AH-X12+Side', isCover: false, sortOrder: 1 },
+      { productId: 10, imageUrl: 'https://placehold.co/600x400/e2e8f0/475569?text=Sharp+AH-X12+Filter', isCover: false, sortOrder: 2 },
+    ]);
+    console.log(`Seeded ${productImages.length} product images.`);
 
     // ─── 4. TECHNICIAN DETAILS ──────────────────────────────────────────────────
     const technicianDetails = await TechnicianDetail.bulkCreate([
@@ -109,22 +165,22 @@ async function seed() {
 
     // ─── 7. ROOM ASSESSMENTS ────────────────────────────────────────────────────
     const roomAssessments = await RoomAssessment.bulkCreate([
-      { serviceRequestId: 1, area: 20, ceilingHeight: 2.8, occupancy: 2, sunlightLevel: 'medium', imagePath: null },
-      { serviceRequestId: 2, area: 30, ceilingHeight: 3.0, occupancy: 4, sunlightLevel: 'high', imagePath: null },
-      { serviceRequestId: 3, area: 12, ceilingHeight: 2.6, occupancy: 1, sunlightLevel: 'low', imagePath: null },
-      { serviceRequestId: 5, area: 35, ceilingHeight: 3.2, occupancy: 8, sunlightLevel: 'high', imagePath: null },
-      { serviceRequestId: 7, area: 25, ceilingHeight: 2.8, occupancy: 3, sunlightLevel: 'medium', imagePath: null },
-      { serviceRequestId: 8, area: 14, ceilingHeight: 2.6, occupancy: 1, sunlightLevel: 'low', imagePath: null },
+      { userId: 7, serviceRequestId: 1, area: 20, ceilingHeight: 2.8, occupancy: 2, sunlightLevel: 'medium', imagePath: null },
+      { userId: 7, serviceRequestId: 2, area: 30, ceilingHeight: 3.0, occupancy: 4, sunlightLevel: 'high', imagePath: null },
+      { userId: 8, serviceRequestId: 3, area: 12, ceilingHeight: 2.6, occupancy: 1, sunlightLevel: 'low', imagePath: null },
+      { userId: 9, serviceRequestId: 5, area: 35, ceilingHeight: 3.2, occupancy: 8, sunlightLevel: 'high', imagePath: null },
+      { userId: 10, serviceRequestId: 7, area: 25, ceilingHeight: 2.8, occupancy: 3, sunlightLevel: 'medium', imagePath: null },
+      { userId: 10, serviceRequestId: 8, area: 14, ceilingHeight: 2.6, occupancy: 1, sunlightLevel: 'low', imagePath: null },
     ]);
     console.log(`Seeded ${roomAssessments.length} room assessments.`);
 
     // ─── 8. AI RECOMMENDATIONS ──────────────────────────────────────────────────
     const aiRecommendations = await AiRecommendation.bulkCreate([
-      { roomAssessmentId: 1, totalBtu: 14400, recommendedHp: 1.5, unitType: 'Split', productId: 2, troubleshootingNotes: null, reasoning: 'Based on 20 sqm area with medium sunlight and 2 occupants, a 1.5HP split-type provides optimal cooling with energy efficiency.' },
-      { roomAssessmentId: 2, totalBtu: 24000, recommendedHp: 2.0, unitType: 'Split', productId: 4, troubleshootingNotes: null, reasoning: 'Large 30 sqm living room with high sunlight and 4 occupants requires a 2HP unit for adequate cooling coverage.' },
-      { roomAssessmentId: 3, totalBtu: 7200, recommendedHp: 0.75, unitType: 'Window', productId: 8, troubleshootingNotes: 'Check refrigerant levels. Possible leak at pipe joints. Recommend pressure test before recharge.', reasoning: '12 sqm room with low sunlight and single occupant. Budget-friendly window-type is sufficient.' },
-      { roomAssessmentId: 4, totalBtu: 28000, recommendedHp: 2.5, unitType: 'Split', productId: 4, troubleshootingNotes: null, reasoning: 'Open-plan 35 sqm office with 8 occupants and high sunlight requires high-capacity cooling. Recommend 2HP minimum or dual units.' },
-      { roomAssessmentId: 5, totalBtu: 17000, recommendedHp: 1.5, unitType: 'Split', productId: 6, troubleshootingNotes: null, reasoning: '25 sqm room with 3 occupants and medium sunlight. 1.5HP split-type with inverter recommended for energy savings.' },
+      { roomAssessmentId: 1, totalBtu: 14400, recommendedHp: 1.5, unitType: 'split-type', productId: 2, troubleshootingNotes: null, reasoning: 'Based on 20 sqm area with medium sunlight and 2 occupants, a 1.5HP split-type provides optimal cooling with energy efficiency.' },
+      { roomAssessmentId: 2, totalBtu: 24000, recommendedHp: 2.0, unitType: 'split-type', productId: 4, troubleshootingNotes: null, reasoning: 'Large 30 sqm living room with high sunlight and 4 occupants requires a 2HP unit for adequate cooling coverage.' },
+      { roomAssessmentId: 3, totalBtu: 7200, recommendedHp: 0.75, unitType: 'window-type', productId: 8, troubleshootingNotes: 'Check refrigerant levels. Possible leak at pipe joints. Recommend pressure test before recharge.', reasoning: '12 sqm room with low sunlight and single occupant. Budget-friendly window-type is sufficient.' },
+      { roomAssessmentId: 4, totalBtu: 28000, recommendedHp: 2.5, unitType: 'split-type', productId: 4, troubleshootingNotes: null, reasoning: 'Open-plan 35 sqm office with 8 occupants and high sunlight requires high-capacity cooling. Recommend 2HP minimum or dual units.' },
+      { roomAssessmentId: 5, totalBtu: 17000, recommendedHp: 1.5, unitType: 'split-type', productId: 6, troubleshootingNotes: null, reasoning: '25 sqm room with 3 occupants and medium sunlight. 1.5HP split-type with inverter recommended for energy savings.' },
     ]);
     console.log(`Seeded ${aiRecommendations.length} AI recommendations.`);
 

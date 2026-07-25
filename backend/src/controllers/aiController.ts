@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
-import { AiRecommendation, RoomAssessment, ServiceRequest, AirconProduct } from '../models';
+import { AiRecommendation, RoomAssessment, AirconProduct } from '../models';
 import {
   createRoomAssessment,
   analyzeRoomImage,
@@ -23,12 +23,12 @@ export async function submitRoomAssessment(
       return;
     }
 
-    const { serviceRequestId, area, ceilingHeight, occupancy, sunlightLevel } = req.body;
+    const { area, ceilingHeight, occupancy, sunlightLevel, serviceRequestId } = req.body;
     const file = req.file;
 
     const roomAssessment = await createRoomAssessment({
-      serviceRequestId: Number(serviceRequestId),
       userId: req.user.userId,
+      serviceRequestId: serviceRequestId ? Number(serviceRequestId) : null,
       area: Number(area),
       ceilingHeight: Number(ceilingHeight),
       occupancy: Number(occupancy),
@@ -75,12 +75,6 @@ export async function getRecommendation(
       include: [
         {
           model: RoomAssessment,
-          include: [
-            {
-              model: ServiceRequest,
-              attributes: ['userId'],
-            },
-          ],
         },
         {
           model: AirconProduct,
@@ -93,11 +87,8 @@ export async function getRecommendation(
       return;
     }
 
-    // Verify ownership: recommendation → roomAssessment → serviceRequest → userId
-    const roomAssessment = recommendation.roomAssessment;
-    const serviceRequest = roomAssessment?.serviceRequest;
-
-    if (!serviceRequest || serviceRequest.userId !== req.user.userId) {
+    // Verify ownership via room assessment userId
+    if (recommendation.roomAssessment?.userId !== req.user.userId) {
       res.status(404).json({ message: 'Recommendation not found' });
       return;
     }

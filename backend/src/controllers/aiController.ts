@@ -11,6 +11,7 @@ import {
   getSessionHistory,
   clearSession,
 } from '../services/chatbotService';
+import { diagnoseACIssue } from '../services/troubleshootingService';
 
 export async function submitRoomAssessment(
   req: AuthenticatedRequest,
@@ -164,6 +165,56 @@ export async function clearChatbotSession(
     clearSession(req.user.userId);
 
     res.status(200).json({ message: 'Chat session cleared successfully.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function submitTroubleshooting(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Access denied. No token provided.' });
+      return;
+    }
+
+    const { issue, acType, brand, model } = req.body;
+
+    // Parse symptoms from form data (sent as symptoms[] array)
+    let symptoms: string[] | undefined;
+    if (req.body.symptoms) {
+      symptoms = Array.isArray(req.body.symptoms) ? req.body.symptoms : [req.body.symptoms];
+    } else if (req.body['symptoms[]']) {
+      symptoms = Array.isArray(req.body['symptoms[]']) ? req.body['symptoms[]'] : [req.body['symptoms[]']];
+    }
+
+    if (!issue || typeof issue !== 'string' || issue.trim().length === 0) {
+      res.status(400).json({ message: 'Issue description is required.' });
+      return;
+    }
+
+    if (issue.length > 2000) {
+      res.status(400).json({ message: 'Issue description must not exceed 2000 characters.' });
+      return;
+    }
+
+    const file = req.file;
+
+    const result = await diagnoseACIssue({
+      issue: issue.trim(),
+      acType: acType?.trim() || undefined,
+      brand: brand?.trim() || undefined,
+      model: model?.trim() || undefined,
+      symptoms: symptoms || undefined,
+      image: file
+        ? { buffer: file.buffer, mimetype: file.mimetype }
+        : undefined,
+    });
+
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

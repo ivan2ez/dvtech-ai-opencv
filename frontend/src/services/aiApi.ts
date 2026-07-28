@@ -65,3 +65,41 @@ export async function getRecommendation(roomAssessmentId: number): Promise<{ rec
   const response = await api.get(`/ai/recommendations/${roomAssessmentId}`);
   return response.data;
 }
+
+// --- Troubleshooting (Gemini) ---
+
+export interface TroubleshootingInput {
+  issue: string;
+  acType?: string;
+  brand?: string;
+  model?: string;
+  symptoms?: string[];
+  image?: File;
+}
+
+export interface TroubleshootingResult {
+  diagnosis: string;
+  possibleCauses: string[];
+  suggestedFixes: string[];
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  requiresTechnician: boolean;
+  additionalNotes: string | null;
+}
+
+export async function submitTroubleshooting(input: TroubleshootingInput): Promise<TroubleshootingResult> {
+  const formData = new FormData();
+  formData.append('issue', input.issue);
+  if (input.acType) formData.append('acType', input.acType);
+  if (input.brand) formData.append('brand', input.brand);
+  if (input.model) formData.append('model', input.model);
+  if (input.symptoms && input.symptoms.length > 0) {
+    input.symptoms.forEach((s) => formData.append('symptoms[]', s));
+  }
+  if (input.image) {
+    formData.append('image', input.image);
+  }
+  const response = await api.post('/ai/troubleshoot', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}

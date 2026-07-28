@@ -19,6 +19,7 @@ import {
   BrainCircuit,
   MessageCircle,
   PanelLeft,
+  SearchCheck,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -33,6 +34,7 @@ function getCustomerLinks(): SidebarLink[] {
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
     { label: 'My Requests', to: '/my-requests', icon: FileText },
     { label: 'AI Recommendation', to: '/ai-recommendation', icon: BrainCircuit },
+    { label: 'Troubleshooting', to: '/troubleshooting', icon: SearchCheck },
     { label: 'Chat', to: '/chat', icon: MessageCircle },
   ];
 }

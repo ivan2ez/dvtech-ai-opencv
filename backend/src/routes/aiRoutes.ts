@@ -6,6 +6,7 @@ import {
   sendChatbotMessage,
   getChatbotHistory,
   clearChatbotSession,
+  submitTroubleshooting,
 } from '../controllers/aiController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { roleMiddleware } from '../middlewares/roleMiddleware';
@@ -65,6 +66,15 @@ router.delete(
   authMiddleware,
   roleMiddleware('customer'),
   clearChatbotSession
+);
+
+// Customer submits an AC troubleshooting request (with optional image)
+router.post(
+  '/troubleshoot',
+  authMiddleware,
+  roleMiddleware('customer'),
+  upload.single('image'),
+  submitTroubleshooting
 );
 
 export default router;

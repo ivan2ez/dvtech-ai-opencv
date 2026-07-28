@@ -21,6 +21,7 @@ import { MyTasks } from './pages/technician/MyTasks';
 import { TaskDetail } from './pages/technician/TaskDetail';
 import { AiRecommendation } from './pages/customer/AiRecommendation';
 import { ChatPage } from './pages/customer/ChatPage';
+import { Troubleshooting } from './pages/customer/Troubleshooting';
 import { Reports } from './pages/admin/Reports';
 import { ManageAccounts } from './pages/admin/ManageAccounts';
 import { HomePage } from './pages/public/HomePage';
@@ -49,6 +50,7 @@ function App() {
             <Route path="/service-request" element={<ServiceRequestForm />} />
             <Route path="/my-requests" element={<MyRequests />} />
             <Route path="/ai-recommendation" element={<AiRecommendation />} />
+            <Route path="/troubleshooting" element={<Troubleshooting />} />
             <Route path="/chat" element={<ChatPage />} />
           </Route>
         </Route>

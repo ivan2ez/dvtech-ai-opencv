@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import health, image_analysis
+from app.routes import health, image_analysis, room_analysis
 
 app = FastAPI(
     title="DVTech AI Service",
@@ -21,3 +21,4 @@ app.add_middleware(
 # Register routes
 app.include_router(health.router, tags=["Health"])
 app.include_router(image_analysis.router, prefix="/api", tags=["Image Analysis"])
+app.include_router(room_analysis.router, prefix="/api", tags=["Room Analysis"])

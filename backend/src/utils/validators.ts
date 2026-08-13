@@ -108,13 +108,13 @@ export const roomAssessmentValidation = [
   body('area')
     .isFloat({ min: 1.0, max: 1000.0 })
     .withMessage('Area must be a number between 1.0 and 1000.0 square meters'),
-  body('ceiling_height')
+  body('ceilingHeight')
     .isFloat({ min: 1.0, max: 10.0 })
     .withMessage('Ceiling height must be a number between 1.0 and 10.0 meters'),
   body('occupancy')
     .isInt({ min: 1, max: 500 })
     .withMessage('Occupancy must be an integer between 1 and 500'),
-  body('sunlight_level')
+  body('sunlightLevel')
     .trim()
     .isIn(['low', 'moderate', 'high'])
     .withMessage('Sunlight level must be one of: low, moderate, high'),

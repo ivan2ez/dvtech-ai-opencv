@@ -5,6 +5,7 @@ import {
   createRoomAssessment,
   analyzeRoomImage,
   generateRecommendation,
+  CombinedImageAnalysis,
 } from '../services/aiService';
 import {
   sendChatMessage,
@@ -45,14 +46,22 @@ export async function submitRoomAssessment(
     });
 
     let recommendation;
+    let opencvAnalysis = null;
+
     if (file) {
-      const imageAnalysis = await analyzeRoomImage(file.buffer, file.originalname);
-      recommendation = await generateRecommendation(roomAssessment.id, imageAnalysis);
+      // Run OpenCV + OpenAI Vision in parallel, then feed both into the recommendation
+      const combinedAnalysis: CombinedImageAnalysis = await analyzeRoomImage(file.buffer, file.originalname);
+      opencvAnalysis = combinedAnalysis.opencv;
+      recommendation = await generateRecommendation(
+        roomAssessment.id,
+        combinedAnalysis.gemini,
+        combinedAnalysis.opencv
+      );
     } else {
       recommendation = await generateRecommendation(roomAssessment.id);
     }
 
-    res.status(201).json({ roomAssessment, recommendation });
+    res.status(201).json({ roomAssessment, recommendation, opencvAnalysis });
   } catch (error) {
     next(error);
   }

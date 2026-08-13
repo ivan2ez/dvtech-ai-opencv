@@ -1,5 +1,38 @@
 import api from './api';
 
+// --- OpenCV Analysis Types ---
+
+export interface OpenCVInsulationMetrics {
+  edgeDensity: number;
+  surfaceVarianceScore: number;
+  brightAreaRatio: number;
+  colorConsistency: number;
+  insulationScore: number;
+}
+
+export interface OpenCVWindowRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  brightness: number;
+  rectangularity: number;
+}
+
+export interface OpenCVAnalysis {
+  windowCount: number;
+  sunlightExposure: 'low' | 'medium' | 'high';
+  heatSources: string[];
+  insulationQuality: 'poor' | 'fair' | 'good';
+  brightnessScore: number;
+  contrastScore: number;
+  warmAreaRatio: number;
+  details?: {
+    windowRegions?: OpenCVWindowRegion[];
+    insulationMetrics?: OpenCVInsulationMetrics;
+  };
+}
+
 export interface RoomAssessmentInput {
   area: number;
   ceilingHeight: number;
@@ -41,6 +74,7 @@ export interface RoomAssessmentResponse {
     imagePath: string | null;
   };
   recommendation: RecommendationResult;
+  opencvAnalysis: OpenCVAnalysis | null;
 }
 
 export async function submitRoomAssessment(input: RoomAssessmentInput): Promise<RoomAssessmentResponse> {

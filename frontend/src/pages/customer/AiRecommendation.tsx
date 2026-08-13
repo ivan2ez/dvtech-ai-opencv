@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { submitRoomAssessment, type RoomAssessmentResponse } from '@/services/aiApi';
+import { submitRoomAssessment, type RoomAssessmentResponse, type OpenCVAnalysis } from '@/services/aiApi';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
@@ -52,6 +52,152 @@ const SUNLIGHT_LEVELS = [
   { value: 'moderate', label: 'Moderate — some direct sunlight during the day' },
   { value: 'high', label: 'High — heavy sun exposure most of the day' },
 ] as const;
+
+// --- OpenCV Metrics Panel ---
+
+function levelBadge(value: string, levels: Record<string, string>) {
+  const cls = levels[value] ?? 'bg-muted text-muted-foreground';
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${cls}`}>
+      {value}
+    </span>
+  );
+}
+
+function ScoreBar({ value, label }: { value: number; label: string }) {
+  const pct = Math.round(value * 100);
+  const color =
+    pct >= 70 ? 'bg-red-400' : pct >= 40 ? 'bg-amber-400' : 'bg-green-400';
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{label}</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function OpenCVMetricsPanel({ data }: { data: OpenCVAnalysis }) {
+  const sunlightColors: Record<string, string> = {
+    low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  };
+
+  const insulationColors: Record<string, string> = {
+    good: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    fair: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    poor: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <h3 className="font-semibold text-sm">OpenCV Image Analysis</h3>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          Computer Vision
+        </span>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Objective measurements extracted from your room photo. These metrics directly influenced the BTU calculation above.
+      </p>
+
+      {/* Top stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-lg border p-3 text-center space-y-1">
+          <p className="text-xs text-muted-foreground">Windows Detected</p>
+          <p className="text-2xl font-bold">{data.windowCount}</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center space-y-1">
+          <p className="text-xs text-muted-foreground">Sunlight</p>
+          <div className="flex justify-center pt-1">
+            {levelBadge(data.sunlightExposure, sunlightColors)}
+          </div>
+        </div>
+        <div className="rounded-lg border p-3 text-center space-y-1">
+          <p className="text-xs text-muted-foreground">Insulation</p>
+          <div className="flex justify-center pt-1">
+            {levelBadge(data.insulationQuality, insulationColors)}
+          </div>
+        </div>
+        <div className="rounded-lg border p-3 text-center space-y-1">
+          <p className="text-xs text-muted-foreground">Heat Sources</p>
+          <p className="text-2xl font-bold">{data.heatSources.length}</p>
+        </div>
+      </div>
+
+      {/* Heat sources list */}
+      {data.heatSources.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">Detected Heat Sources</p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.heatSources.map((source) => (
+              <span
+                key={source}
+                className="rounded-full border bg-muted px-2.5 py-0.5 text-xs capitalize"
+              >
+                {source}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Score bars */}
+      <div className="space-y-3 rounded-lg border p-4">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Pixel-level Measurements
+        </p>
+        <ScoreBar value={data.brightnessScore} label="Brightness Score" />
+        <ScoreBar value={data.contrastScore} label="Contrast Score" />
+        <ScoreBar value={data.warmAreaRatio} label="Warm Area Ratio (heat gain)" />
+
+        {data.details?.insulationMetrics && (
+          <>
+            <ScoreBar
+              value={data.details.insulationMetrics.edgeDensity}
+              label="Edge Density (surface roughness)"
+            />
+            <ScoreBar
+              value={data.details.insulationMetrics.colorConsistency}
+              label="Color Consistency (lighting uniformity)"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Interpretation note */}
+      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300 space-y-1">
+        <p className="font-medium">How this affects your recommendation</p>
+        <ul className="list-disc list-inside space-y-0.5 text-blue-700 dark:text-blue-400">
+          {data.warmAreaRatio > 0.3 && (
+            <li>High warm area ratio (+heat gain adjustment applied to BTU)</li>
+          )}
+          {data.insulationQuality === 'poor' && (
+            <li>Poor insulation detected (+10–15% BTU adjustment applied)</li>
+          )}
+          {data.heatSources.length > 2 && (
+            <li>Multiple heat sources detected (internal heat load factored in)</li>
+          )}
+          {data.windowCount > 1 && (
+            <li>{data.windowCount} windows detected (solar heat gain included)</li>
+          )}
+          {data.warmAreaRatio <= 0.3 &&
+            data.insulationQuality !== 'poor' &&
+            data.heatSources.length <= 2 &&
+            data.windowCount <= 1 && (
+              <li>No major adjustment factors detected — standard BTU formula applied</li>
+            )}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 export function AiRecommendation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -291,6 +437,13 @@ export function AiRecommendation() {
                 <p className="text-2xl font-bold">{result.recommendation.unitType}</p>
               </div>
             </div>
+
+            {/* OpenCV Image Analysis Panel — only shown when an image was uploaded */}
+            {result.opencvAnalysis && (
+              <div className="rounded-lg border p-4">
+                <OpenCVMetricsPanel data={result.opencvAnalysis} />
+              </div>
+            )}
 
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">Reasoning</h3>

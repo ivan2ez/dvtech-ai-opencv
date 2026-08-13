@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Op } from 'sequelize';
 import { RoomAssessment, BtuFactor, AirconProduct, AiRecommendation } from '../models';
-import { preprocessImage } from './imageService';
+import { preprocessImage, analyzeRoomWithOpenCV, RoomAnalysisResult } from './imageService';
 
 // --- Types ---
 
@@ -224,15 +224,30 @@ async function withRetry<T>(
   throw error;
 }
 
-// --- OpenAI Vision Integration ---
+// --- Gemini Client ---
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder' });
+function getGeminiClient() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your-gemini-api-key-here') {
+    const error = new Error(
+      'GEMINI_API_KEY is not configured. Please add your Gemini API key to the .env file and restart the server.'
+    ) as Error & { statusCode: number };
+    error.statusCode = 503;
+    throw error;
+  }
+  return new GoogleGenerativeAI(apiKey);
+}
 
 export interface RoomImageAnalysis {
   windowCount: number;
   sunlightExposure: 'low' | 'medium' | 'high';
   heatSources: string[];
   insulationQuality: 'poor' | 'fair' | 'good';
+}
+
+export interface CombinedImageAnalysis {
+  gemini: RoomImageAnalysis;
+  opencv: RoomAnalysisResult;
 }
 
 const ROOM_ANALYSIS_PROMPT = `You are an expert HVAC analyst. Analyze the provided room image and return a JSON object with the following properties:
@@ -245,112 +260,119 @@ const ROOM_ANALYSIS_PROMPT = `You are an expert HVAC analyst. Analyze the provid
 Return ONLY valid JSON with these exact fields. Do not include any other text or explanation.`;
 
 /**
- * Analyzes a room image using OpenAI Vision (gpt-4o) to extract
- * room characteristics relevant to HVAC assessment.
+ * Analyzes a room image using both OpenCV (deterministic metrics) and
+ * Gemini Vision (semantic understanding) in parallel.
+ *
+ * OpenCV runs via the Python microservice to extract brightness,
+ * contrast, warm area ratio, window regions, and insulation metrics.
+ * Gemini Vision interprets the same preprocessed image for semantic labels.
+ * Both results are returned together to feed the recommendation prompt.
  */
 export async function analyzeRoomImage(
   imageBuffer: Buffer,
   filename: string
-): Promise<RoomImageAnalysis> {
-  // 1. Preprocess the image via the AI microservice
-  const { processedImage } = await preprocessImage(imageBuffer, filename);
+): Promise<CombinedImageAnalysis> {
+  const genAI = getGeminiClient();
 
-  // 2. Convert processed JPEG to base64
-  const base64Image = processedImage.toString('base64');
+  // Run preprocessing and OpenCV analysis in parallel — both hit the Python
+  // microservice independently with no ordering dependency between them.
+  const [{ processedImage }, opencvResult] = await Promise.all([
+    preprocessImage(imageBuffer, filename),
+    analyzeRoomWithOpenCV(imageBuffer, filename),
+  ]);
 
-  // 3. Send to OpenAI gpt-4o with vision (with retry logic)
-  const response = await withRetry(
-    () =>
-      openai.chat.completions.create({
-        model: 'gpt-4o',
-        max_tokens: 1000,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: ROOM_ANALYSIS_PROMPT },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-      }),
-    { maxRetries: 3, initialDelayMs: 1000, context: 'Image analysis' }
-  );
+  // Use gemini-1.5-flash — supports vision and is cost-effective
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  // 4. Parse and validate the JSON response
-  const content = response.choices?.[0]?.message?.content;
+  // Send preprocessed image as inlineData (same pattern as troubleshootingService)
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+    { text: ROOM_ANALYSIS_PROMPT },
+    {
+      inlineData: {
+        mimeType: 'image/jpeg',
+        data: processedImage.toString('base64'),
+      },
+    },
+  ];
 
-  if (!content) {
+  let rawContent: string;
+  try {
+    const result = await model.generateContent(parts);
+    rawContent = result.response.text();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[analyzeRoomImage] Gemini API error:', message);
+
+    if (message.includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
+      const rateLimitError = new Error(
+        'AI service quota exceeded. Please wait a few minutes and try again.'
+      ) as Error & { statusCode: number };
+      rateLimitError.statusCode = 429;
+      throw rateLimitError;
+    }
+
     const error = new Error(
-      'OpenAI returned an empty response'
+      'Room image analysis failed. Please try again later.'
     ) as Error & { statusCode: number };
+    error.statusCode = 503;
+    throw error;
+  }
+
+  if (!rawContent) {
+    const error = new Error('Gemini returned an empty response for image analysis') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
+  }
+
+  // Strip markdown code fences if Gemini wraps the JSON
+  let jsonString = rawContent.trim();
+  const jsonMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonString = jsonMatch[1].trim();
   }
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(jsonString);
   } catch {
-    const error = new Error(
-      'OpenAI returned invalid JSON'
-    ) as Error & { statusCode: number };
+    const error = new Error('Gemini returned invalid JSON for image analysis') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
 
-  // 5. Validate structure
   const result = parsed as Record<string, unknown>;
-
   const validSunlight = ['low', 'medium', 'high'];
   const validInsulation = ['poor', 'fair', 'good'];
 
-  if (
-    typeof result.windowCount !== 'number' ||
-    !Number.isInteger(result.windowCount)
-  ) {
-    const error = new Error(
-      'OpenAI response missing valid windowCount'
-    ) as Error & { statusCode: number };
+  if (typeof result.windowCount !== 'number' || !Number.isInteger(result.windowCount)) {
+    const error = new Error('Gemini response missing valid windowCount') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
-
   if (!validSunlight.includes(result.sunlightExposure as string)) {
-    const error = new Error(
-      'OpenAI response missing valid sunlightExposure'
-    ) as Error & { statusCode: number };
+    const error = new Error('Gemini response missing valid sunlightExposure') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
-
   if (!Array.isArray(result.heatSources)) {
-    const error = new Error(
-      'OpenAI response missing valid heatSources array'
-    ) as Error & { statusCode: number };
+    const error = new Error('Gemini response missing valid heatSources array') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
-
   if (!validInsulation.includes(result.insulationQuality as string)) {
-    const error = new Error(
-      'OpenAI response missing valid insulationQuality'
-    ) as Error & { statusCode: number };
+    const error = new Error('Gemini response missing valid insulationQuality') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
 
   return {
-    windowCount: result.windowCount as number,
-    sunlightExposure: result.sunlightExposure as RoomImageAnalysis['sunlightExposure'],
-    heatSources: result.heatSources as string[],
-    insulationQuality: result.insulationQuality as RoomImageAnalysis['insulationQuality'],
+    gemini: {
+      windowCount: result.windowCount as number,
+      sunlightExposure: result.sunlightExposure as RoomImageAnalysis['sunlightExposure'],
+      heatSources: result.heatSources as string[],
+      insulationQuality: result.insulationQuality as RoomImageAnalysis['insulationQuality'],
+    },
+    opencv: opencvResult,
   };
 }
 
@@ -378,7 +400,7 @@ export interface RecommendationResult {
   } | null;
 }
 
-interface OpenAIRecommendationResponse {
+interface GeminiRecommendationResponse {
   total_btu: number;
   recommended_hp: number;
   unit_type: string;
@@ -389,13 +411,16 @@ interface OpenAIRecommendationResponse {
 // --- Recommendation Service ---
 
 /**
- * Generates an AI-powered AC recommendation based on room assessment data,
- * BTU factors, optional image analysis, and the product catalog.
+ * Generates an AI-powered AC recommendation using Gemini based on room
+ * assessment data, BTU factors, optional image analysis, and the product catalog.
  */
 export async function generateRecommendation(
   roomAssessmentId: number,
-  imageAnalysis?: RoomImageAnalysis
+  imageAnalysis?: RoomImageAnalysis,
+  opencvAnalysis?: RoomAnalysisResult
 ): Promise<RecommendationResult> {
+  const genAI = getGeminiClient();
+
   // 1. Fetch RoomAssessment by ID
   const roomAssessment = await RoomAssessment.findByPk(roomAssessmentId);
   if (!roomAssessment) {
@@ -423,54 +448,75 @@ export async function generateRecommendation(
   }
 
   // 4. Build the recommendation prompt
-  const prompt = buildRecommendationPrompt(roomAssessment, btuFactors, products, imageAnalysis);
+  const prompt = buildRecommendationPrompt(roomAssessment, btuFactors, products, imageAnalysis, opencvAnalysis);
 
-  // 5. Send to OpenAI gpt-4o (with retry logic)
-  const response = await withRetry(
-    () =>
-      openai.chat.completions.create({
-        model: 'gpt-4o',
-        max_tokens: 1000,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert HVAC engineer. Analyze the provided room data and BTU factors to calculate the total BTU requirement and recommend an appropriate air conditioning unit. Return your response as valid JSON.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      }),
-    { maxRetries: 3, initialDelayMs: 1000, context: 'AI recommendation' }
-  );
+  // 5. Send to Gemini (gemini-1.5-flash — text only, no image needed here)
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  // 6. Parse the response
-  const content = response.choices?.[0]?.message?.content;
-  if (!content) {
-    const error = new Error('OpenAI returned an empty response') as Error & { statusCode: number };
-    error.statusCode = 502;
-    throw error;
-  }
+  const systemInstruction = 'You are an expert HVAC engineer. Analyze the provided room data and BTU factors to calculate the total BTU requirement and recommend an appropriate air conditioning unit. Return your response as valid JSON only — no markdown, no explanation outside the JSON object.';
 
-  let parsed: OpenAIRecommendationResponse;
+  let rawContent: string;
   try {
-    parsed = JSON.parse(content) as OpenAIRecommendationResponse;
-  } catch {
-    const error = new Error('OpenAI returned invalid JSON for recommendation') as Error & { statusCode: number };
+    const result = await model.generateContent(`${systemInstruction}\n\n${prompt}`);
+    rawContent = result.response.text();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[generateRecommendation] Gemini API error:', message);
+
+    if (message.includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
+      const rateLimitError = new Error(
+        'AI service quota exceeded. Please wait a few minutes and try again.'
+      ) as Error & { statusCode: number };
+      rateLimitError.statusCode = 429;
+      throw rateLimitError;
+    }
+
+    // Retry once with backoff
+    try {
+      await sleep(2000);
+      const retryResult = await model.generateContent(`${systemInstruction}\n\n${prompt}`);
+      rawContent = retryResult.response.text();
+    } catch (retryErr: unknown) {
+      const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+      console.error('[generateRecommendation] Gemini retry failed:', retryMsg);
+      const error = new Error(
+        'AI recommendation could not be completed. Please try again later.'
+      ) as Error & { statusCode: number };
+      error.statusCode = 503;
+      throw error;
+    }
+  }
+
+  if (!rawContent) {
+    const error = new Error('Gemini returned an empty response for recommendation') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
 
-  // Validate parsed fields
+  // Strip markdown code fences if Gemini wraps the JSON
+  let jsonString = rawContent.trim();
+  const jsonMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonString = jsonMatch[1].trim();
+  }
+
+  let parsed: GeminiRecommendationResponse;
+  try {
+    parsed = JSON.parse(jsonString) as GeminiRecommendationResponse;
+  } catch {
+    const error = new Error('Gemini returned invalid JSON for recommendation') as Error & { statusCode: number };
+    error.statusCode = 502;
+    throw error;
+  }
+
+  // Validate required fields
   if (
     typeof parsed.total_btu !== 'number' ||
     typeof parsed.recommended_hp !== 'number' ||
     typeof parsed.unit_type !== 'string' ||
     typeof parsed.reasoning !== 'string'
   ) {
-    const error = new Error('OpenAI response is missing required recommendation fields') as Error & { statusCode: number };
+    const error = new Error('Gemini response is missing required recommendation fields') as Error & { statusCode: number };
     error.statusCode = 502;
     throw error;
   }
@@ -497,7 +543,7 @@ export async function generateRecommendation(
   });
 
   // 9. Build and return the result
-  const result: RecommendationResult = {
+  return {
     id: recommendation.id,
     roomAssessmentId: recommendation.roomAssessmentId,
     totalBtu: recommendation.totalBtu,
@@ -519,8 +565,6 @@ export async function generateRecommendation(
         }
       : null,
   };
-
-  return result;
 }
 
 // --- Prompt Builder ---
@@ -529,7 +573,8 @@ function buildRecommendationPrompt(
   roomAssessment: RoomAssessment,
   btuFactors: BtuFactor[],
   products: AirconProduct[],
-  imageAnalysis?: RoomImageAnalysis
+  imageAnalysis?: RoomImageAnalysis,
+  opencvAnalysis?: RoomAnalysisResult
 ): string {
   const sections: string[] = [];
 
@@ -546,13 +591,33 @@ function buildRecommendationPrompt(
     .join('\n');
   sections.push(`## BTU Calculation Factors\n${factorsList}`);
 
-  // Image analysis section (optional)
+  // Gemini Vision analysis section (semantic labels)
   if (imageAnalysis) {
-    sections.push(`## Room Image Analysis Results
+    sections.push(`## Room Image Analysis — Gemini Vision (Semantic)
 - Windows Count: ${imageAnalysis.windowCount}
 - Sunlight Exposure: ${imageAnalysis.sunlightExposure}
 - Heat Sources: ${imageAnalysis.heatSources.length > 0 ? imageAnalysis.heatSources.join(', ') : 'None detected'}
 - Insulation Quality: ${imageAnalysis.insulationQuality}`);
+  }
+
+  // OpenCV analysis section (objective measurements)
+  if (opencvAnalysis) {
+    const heatSourcesList = opencvAnalysis.heatSources.length > 0
+      ? opencvAnalysis.heatSources.join(', ')
+      : 'None detected';
+
+    sections.push(`## Room Image Analysis — OpenCV (Objective Measurements)
+- Windows Detected: ${opencvAnalysis.windowCount}
+- Sunlight Exposure Level: ${opencvAnalysis.sunlightExposure}
+- Detected Heat Sources: ${heatSourcesList}
+- Insulation Quality: ${opencvAnalysis.insulationQuality}
+- Brightness Score: ${opencvAnalysis.brightnessScore} (0=dark, 1=very bright)
+- Contrast Score: ${opencvAnalysis.contrastScore} (0=low contrast, 1=high contrast)
+- Warm Area Ratio: ${opencvAnalysis.warmAreaRatio} (proportion of warm-colored pixels — higher = more heat gain)
+${opencvAnalysis.details?.insulationMetrics ? `- Edge Density: ${opencvAnalysis.details.insulationMetrics.edgeDensity} (higher = rougher surfaces/more gaps)
+- Surface Variance: ${opencvAnalysis.details.insulationMetrics.surfaceVarianceScore} (higher = less uniform walls)
+- Bright Area Ratio: ${opencvAnalysis.details.insulationMetrics.brightAreaRatio} (proportion of very bright pixels)
+- Color Consistency: ${opencvAnalysis.details.insulationMetrics.colorConsistency} (higher = more uniform lighting)` : ''}`);
   }
 
   // Product catalog section
@@ -563,13 +628,19 @@ function buildRecommendationPrompt(
 
   // Instructions
   sections.push(`## Instructions
-Using the room data, BTU factors, and image analysis (if provided), calculate the total BTU requirement for this room. Then recommend an appropriate AC unit.
+Using the room data, BTU factors, and image analysis results (if provided), calculate the total BTU requirement for this room. Then recommend an appropriate AC unit.
+
+When image analysis data is available, use the OpenCV objective measurements to adjust your BTU estimate:
+- High warm area ratio (>0.3) or high brightness score (>0.6) → add heat gain factor
+- Poor insulation quality or high edge density → increase BTU estimate by 10-15%
+- Multiple detected heat sources → account for additional internal heat load
+- High window count → factor in solar heat gain
 
 Return a JSON object with the following fields:
 - "total_btu": number — the calculated total BTU requirement
 - "recommended_hp": number — recommended horsepower (0.5 to 5.0)
 - "unit_type": string — one of "split-type", "window-type", or "floor-standing"
-- "reasoning": string — detailed explanation of the calculation and recommendation
+- "reasoning": string — detailed explanation of the calculation and recommendation, including how image data influenced the result
 - "troubleshooting_notes": string or null — any observations or potential issues based on image analysis (null if no image was analyzed)
 
 Consider all BTU factors in your calculation. Match the recommendation to the closest suitable product from the catalog.`);

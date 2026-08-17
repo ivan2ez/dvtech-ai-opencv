@@ -162,7 +162,7 @@ export async function diagnoseACIssue(
   input: TroubleshootingRequest
 ): Promise<TroubleshootingResponse> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   const userPrompt = buildUserPrompt(input);
 

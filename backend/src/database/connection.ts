@@ -13,9 +13,14 @@ import { BtuFactor } from '../models/BtuFactor';
 import { Report } from '../models/Report';
 import { ServiceType } from '../models/ServiceType';
 
+// Use /tmp for writable storage on Vercel (serverless), otherwise use project root
+const dbStorage = process.env.VERCEL === '1'
+  ? '/tmp/database.sqlite'
+  : path.join(__dirname, '..', '..', 'database.sqlite');
+
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: path.join(__dirname, '..', '..', 'database.sqlite'),
+  storage: dbStorage,
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   models: [
     User,

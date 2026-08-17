@@ -63,15 +63,25 @@ app.use('/api/admin', adminRoutes);
 // Global error handling middleware (must be registered after all routes)
 app.use(errorMiddleware);
 
-// Start server
-sequelize.authenticate().then(() => {
+// Initialize database connection
+const initDb = sequelize.authenticate().then(async () => {
   console.log('Database connection established.');
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  // On Vercel, auto-sync tables since /tmp is ephemeral
+  if (process.env.VERCEL === '1') {
+    await sequelize.sync();
+    console.log('Database tables synced.');
+  }
 }).catch((err) => {
   console.error('Unable to connect to database:', err);
-  process.exit(1);
 });
+
+// Start server only in non-serverless environments
+if (process.env.VERCEL !== '1') {
+  initDb.then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  });
+}
 
 export default app;

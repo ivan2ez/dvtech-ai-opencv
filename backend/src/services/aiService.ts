@@ -283,8 +283,8 @@ export async function analyzeRoomImage(
     analyzeRoomWithOpenCV(imageBuffer, filename),
   ]);
 
-  // Use gemini-2.5-flash — supports vision and is cost-effective
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  // Use gemini-3.6-flash — supports vision and is cost-effective
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
   // Send preprocessed image as inlineData (same pattern as troubleshootingService)
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
@@ -452,8 +452,8 @@ export async function generateRecommendation(
   // 4. Build the recommendation prompt
   const prompt = buildRecommendationPrompt(roomAssessment, btuFactors, products, imageAnalysis, opencvAnalysis);
 
-  // 5. Send to Gemini (gemini-2.5-flash — text only, no image needed here)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  // 5. Send to Gemini (gemini-3.6-flash — text only, no image needed here)
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
   const systemInstruction = 'You are an expert HVAC engineer. Analyze the provided room data and BTU factors to calculate the total BTU requirement and recommend an appropriate air conditioning unit. Return your response as valid JSON only — no markdown, no explanation outside the JSON object.';
 

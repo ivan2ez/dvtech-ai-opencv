@@ -1,5 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';
 import path from 'path';
+// Explicit import so Vercel's bundler includes mysql2
+import 'mysql2';
 import { User } from '../models/User';
 import { ServiceRequest } from '../models/ServiceRequest';
 import { RoomAssessment } from '../models/RoomAssessment';

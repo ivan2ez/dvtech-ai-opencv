@@ -39,7 +39,9 @@ const OCCUPANCY_MIN = 1;
 const OCCUPANCY_MAX = 500;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const VALID_IMAGE_MIMETYPES = ['image/jpeg', 'image/png'];
-const UPLOAD_DIR = path.resolve(__dirname, '../../uploads/room-images');
+const UPLOAD_DIR = process.env.VERCEL === '1'
+  ? '/tmp/uploads/room-images'
+  : path.resolve(__dirname, '../../uploads/room-images');
 
 // --- Validation Helpers ---
 

@@ -7,17 +7,6 @@ dotenv.config();
 import path from 'path';
 import express from 'express';
 import cors from 'cors';
-import sequelize from './database/connection';
-import authRoutes from './routes/authRoutes';
-import productRoutes from './routes/productRoutes';
-import btuFactorRoutes from './routes/btuFactorRoutes';
-import serviceTypeRoutes from './routes/serviceTypeRoutes';
-import brandRoutes from './routes/brandRoutes';
-import serviceRequestRoutes from './routes/serviceRequestRoutes';
-import aiRoutes from './routes/aiRoutes';
-import scheduleRoutes from './routes/scheduleRoutes';
-import reportRoutes from './routes/reportRoutes';
-import adminRoutes from './routes/adminRoutes';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 import { publicRateLimiter } from './middlewares/rateLimitMiddleware';
 
@@ -34,7 +23,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
+// Health check route (no DB dependency)
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -43,41 +32,65 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+// Lazy-load database and routes only if DB is configured
+let dbInitialized = false;
+const initRoutes = async () => {
+  if (dbInitialized) return;
+  dbInitialized = true;
 
-// Public routes with rate limiting
-app.use('/api/auth', publicRateLimiter, authRoutes);
-app.use('/api/products', publicRateLimiter, productRoutes);
-app.use('/api/services', publicRateLimiter, serviceTypeRoutes);
-app.use('/api/brands', publicRateLimiter, brandRoutes);
+  const { default: sequelize } = await import('./database/connection');
+  const { default: authRoutes } = await import('./routes/authRoutes');
+  const { default: productRoutes } = await import('./routes/productRoutes');
+  const { default: btuFactorRoutes } = await import('./routes/btuFactorRoutes');
+  const { default: serviceTypeRoutes } = await import('./routes/serviceTypeRoutes');
+  const { default: brandRoutes } = await import('./routes/brandRoutes');
+  const { default: serviceRequestRoutes } = await import('./routes/serviceRequestRoutes');
+  const { default: aiRoutes } = await import('./routes/aiRoutes');
+  const { default: scheduleRoutes } = await import('./routes/scheduleRoutes');
+  const { default: reportRoutes } = await import('./routes/reportRoutes');
+  const { default: adminRoutes } = await import('./routes/adminRoutes');
 
-// Protected routes (no public rate limiting needed)
-app.use('/api/btu-factors', btuFactorRoutes);
-app.use('/api/service-requests', serviceRequestRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/schedules', scheduleRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/admin', adminRoutes);
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+
+  // Public routes with rate limiting
+  app.use('/api/auth', publicRateLimiter, authRoutes);
+  app.use('/api/products', publicRateLimiter, productRoutes);
+  app.use('/api/services', publicRateLimiter, serviceTypeRoutes);
+  app.use('/api/brands', publicRateLimiter, brandRoutes);
+
+  // Protected routes
+  app.use('/api/btu-factors', btuFactorRoutes);
+  app.use('/api/service-requests', serviceRequestRoutes);
+  app.use('/api/ai', aiRoutes);
+  app.use('/api/schedules', scheduleRoutes);
+  app.use('/api/reports', reportRoutes);
+  app.use('/api/admin', adminRoutes);
+
+  // Connect to database
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection established.');
+    if (process.env.VERCEL === '1') {
+      await sequelize.sync();
+      console.log('Database tables synced.');
+    }
+  } catch (err) {
+    console.error('Unable to connect to database:', err);
+  }
+};
+
+// Initialize routes if DATABASE_URL or DB_HOST is configured
+if (process.env.DATABASE_URL || process.env.DB_HOST) {
+  initRoutes();
+}
 
 // Global error handling middleware (must be registered after all routes)
 app.use(errorMiddleware);
 
-// Initialize database connection
-const initDb = sequelize.authenticate().then(async () => {
-  console.log('Database connection established.');
-  // On Vercel, auto-sync tables since /tmp is ephemeral
-  if (process.env.VERCEL === '1') {
-    await sequelize.sync();
-    console.log('Database tables synced.');
-  }
-}).catch((err) => {
-  console.error('Unable to connect to database:', err);
-});
-
 // Start server only in non-serverless environments
 if (process.env.VERCEL !== '1') {
-  initDb.then(() => {
+  initRoutes().then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

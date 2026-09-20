@@ -45,6 +45,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { DetailDialog, DetailItem, DetailTextBlock } from '@/components/shared/DetailDialog';
 import { CompleteTaskDialog } from '@/components/technician/CompleteTaskDialog';
 import { resolveUploadUrl } from '@/lib/completionPhoto';
+import { getApiErrorMessage } from '@/lib/utils';
 import type {
   ServiceRequest,
   ServiceTimeSlot,
@@ -60,7 +61,11 @@ import {
   formatRequiredSchedule,
   TIME_SLOT_SHORT_LABELS,
 } from '@/utils/serviceRequest';
-import { getServiceRequests, proposeReschedule } from '@/services/serviceRequestApi';
+import {
+  getServiceRequests,
+  getRequestsAwaitingScheduling,
+  proposeReschedule,
+} from '@/services/serviceRequestApi';
 import {
   getSchedules,
   assignTechnician,
@@ -83,7 +88,6 @@ const PRIORITY_BADGE: Record<SchedulePriority, { label: string; className: strin
 
 const AVAILABILITY_BADGE: Record<string, { label: string; className: string }> = {
   available: { label: 'Available', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  busy: { label: 'Busy', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
   unavailable: { label: 'Unavailable', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
 };
 
@@ -143,20 +147,6 @@ function getTodayString(): string {
   ).padStart(2, '0')}`;
 }
 
-/** Pulls the backend's message out of an axios error so rules surface verbatim. */
-function getApiErrorMessage(err: unknown, fallback: string): string {
-  if (
-    typeof err === 'object' &&
-    err !== null &&
-    'response' in err &&
-    typeof (err as Record<string, unknown>).response === 'object'
-  ) {
-    const response = (err as { response: { data?: { message?: string } } }).response;
-    if (response?.data?.message) return response.data.message;
-  }
-  return fallback;
-}
-
 /** The half-day slots a reschedule can be proposed into. */
 const TIME_SLOT_CHOICES: Array<{
   value: ServiceTimeSlot;
@@ -211,6 +201,7 @@ export function ManageSchedules() {
   // Admin task-completion dialog (report + required photo).
   const [adminCompleteOpen, setAdminCompleteOpen] = useState(false);
   const [isAdminCompleting, setIsAdminCompleting] = useState(false);
+  const [adminCompleteError, setAdminCompleteError] = useState<string | null>(null);
 
   // All-schedules list vs Archive (recycle bin) view.
   const [showArchive, setShowArchive] = useState(false);
@@ -269,11 +260,24 @@ export function ManageSchedules() {
   const fetchApprovedRequests = useCallback(async () => {
     setIsLoadingRequests(true);
     try {
-      const response = await getServiceRequests({ page: 1, pageSize: 100 });
-      const awaitingSchedule = response.data.filter(
-        (r) => r.status === 'approved' || r.status === 'needs-rescheduling'
+      // Approved + unscheduled requests come from the gated endpoint, which
+      // applies the quotation Paid-gate server-side (a quotation-based request
+      // only surfaces once it is paid; non-quotation requests are unaffected —
+      // Req 11.5, 11.6, 11.7). We additionally pull requests already out for a
+      // customer reschedule reply so the admin sees both pending states in one
+      // place, then de-duplicate by id.
+      const [awaiting, general] = await Promise.all([
+        getRequestsAwaitingScheduling(),
+        getServiceRequests({ page: 1, pageSize: 100 }),
+      ]);
+      const needsRescheduling = general.data.filter(
+        (r) => r.status === 'needs-rescheduling'
       );
-      setApprovedRequests(awaitingSchedule);
+      const byId = new Map<number, ServiceRequest>();
+      for (const request of [...awaiting, ...needsRescheduling]) {
+        byId.set(request.id, request);
+      }
+      setApprovedRequests(Array.from(byId.values()));
     } catch (err) {
       console.error('Failed to fetch service requests:', err);
       setError('Failed to load approved requests. Please try again.');
@@ -345,7 +349,10 @@ export function ManageSchedules() {
   function handleOpenAssignDialog(request: ServiceRequest) {
     setSelectedRequest(request);
     setSelectedTechnicianId('');
-    setScheduledDate('');
+    // Prefill the scheduled date from the customer's requested date when present
+    // so the admin only has to pick an available technician; left empty (and
+    // editable) when the request carries no requested date (Req 6.1, 6.3, 6.5).
+    setScheduledDate(request.serviceRequiredDate ?? '');
     // Seed the slot from the customer's requested time so the free-technician
     // lookup starts from what they actually asked for.
     setSelectedSlot((request.serviceRequiredTime as ScheduleTimeSlot | undefined) ?? 'morning');
@@ -425,7 +432,7 @@ export function ManageSchedules() {
   async function handleAdminComplete(report: string, photo: File) {
     if (!detailSchedule) return;
     setIsAdminCompleting(true);
-    setError(null);
+    setAdminCompleteError(null);
     try {
       const scheduleId = detailSchedule.id;
       const updated = await completeTask(detailSchedule.id, report, photo);
@@ -435,80 +442,107 @@ export function ManageSchedules() {
       toast.success(`Task #${scheduleId} marked as completed.`);
     } catch (err) {
       console.error('Failed to complete task:', err);
-      // The axios interceptor surfaces the backend message via toast.
-      setError('Failed to complete the task. Please try again.');
+      // Surface the specific server message inline in the modal (Req 17.10);
+      // keep the dialog open so the admin can read it and retry.
+      setAdminCompleteError(
+        getApiErrorMessage(err, 'Failed to complete the task. Please try again.'),
+      );
     } finally {
       setIsAdminCompleting(false);
     }
   }
 
   /**
-   * Loads the technicians who are free for the chosen date + slot whenever the
-   * assign dialog is open and a valid (non-past) date is set. The dropdown is
-   * fed only by this list, so busy / unavailable / fully-booked technicians
-   * never appear. If the currently selected technician drops out of the fresh
-   * list (e.g. the admin changed the date), the selection is cleared.
+   * Loads the technicians who are free for the chosen date + slot. The dropdown
+   * is fed only by this list, so unavailable / fully-booked technicians never
+   * appear. If the currently selected technician drops out of the fresh list
+   * (e.g. the admin changed the date), the selection is cleared.
+   *
+   * On failure the caller surfaces an error state with a Retry action
+   * (Req 7.5); a successful-but-empty result is a distinct no-technicians
+   * message (Req 7.6). Returns a cleanup flag so the effect can cancel a
+   * stale in-flight request.
    */
+  const loadAvailableTechnicians = useCallback(
+    (date: string, slot: ScheduleTimeSlot) => {
+      // Need a valid, non-past date before we can ask the backend anything.
+      if (!date || date < getTodayString()) {
+        setAvailableTechnicians([]);
+        setAvailableError(null);
+        setSelectedTechnicianId('');
+        return () => {};
+      }
+
+      let cancelled = false;
+      setIsLoadingAvailable(true);
+      setAvailableError(null);
+
+      getAvailableTechnicians(date, slot)
+        .then((list) => {
+          if (cancelled) return;
+          setAvailableTechnicians(list);
+          // Drop a stale selection that is no longer free for this date/slot.
+          setSelectedTechnicianId((current) =>
+            current !== '' && list.some((t) => t.id === current) ? current : ''
+          );
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error('Failed to load available technicians:', err);
+          setAvailableTechnicians([]);
+          setSelectedTechnicianId('');
+          setAvailableError('Failed to load available technicians for this date.');
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingAvailable(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    },
+    []
+  );
+
+  /** Re-runs the available-technicians lookup for the Retry action (Req 7.5). */
+  function handleRetryAvailable() {
+    loadAvailableTechnicians(scheduledDate, selectedSlot);
+  }
+
+  // Reload the dropdown whenever the assign dialog is open and the date/slot
+  // changes.
   useEffect(() => {
     if (!assignDialogOpen) return;
+    return loadAvailableTechnicians(scheduledDate, selectedSlot);
+  }, [assignDialogOpen, scheduledDate, selectedSlot, loadAvailableTechnicians]);
 
-    // Need a valid, non-past date before we can ask the backend anything.
-    if (!scheduledDate || scheduledDate < getTodayString()) {
-      setAvailableTechnicians([]);
-      setAvailableError(null);
-      setSelectedTechnicianId('');
-      return;
-    }
-
+  /**
+   * Loads the technicians free for the reassignment's existing date + slot,
+   * explicitly excluding the schedule's current technician as a pre-filter
+   * (Req 8.1, 8.2) so they can never be reassigned to their own task. On
+   * failure the modal shows an error state with a Retry action (Req 8.4); a
+   * successful-but-empty result is a distinct no-technicians message (Req 8.5).
+   */
+  const loadReassignCandidates = useCallback((schedule: TechnicianSchedule) => {
+    const slot = (schedule.scheduledTime as ScheduleTimeSlot | null) ?? 'morning';
     let cancelled = false;
-    setIsLoadingAvailable(true);
-    setAvailableError(null);
+    setIsLoadingReassign(true);
+    setReassignError(null);
 
-    getAvailableTechnicians(scheduledDate, selectedSlot)
+    getAvailableTechnicians(schedule.scheduledDate, slot, schedule.technicianId)
       .then((list) => {
         if (cancelled) return;
-        setAvailableTechnicians(list);
-        // Drop a stale selection that is no longer free for this date/slot.
-        setSelectedTechnicianId((current) =>
+        setReassignCandidates(list);
+        // Drop a stale selection that is no longer free for this slot.
+        setReassignTechnicianId((current) =>
           current !== '' && list.some((t) => t.id === current) ? current : ''
         );
       })
       .catch((err) => {
         if (cancelled) return;
-        console.error('Failed to load available technicians:', err);
-        setAvailableTechnicians([]);
-        setSelectedTechnicianId('');
-        setAvailableError('Failed to load available technicians for this date.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingAvailable(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [assignDialogOpen, scheduledDate, selectedSlot]);
-
-  // Load technicians free for the reassignment's existing date + slot. The
-  // currently-assigned technician is naturally excluded: their own task holds
-  // that slot, so the availability check filters them out.
-  useEffect(() => {
-    if (!reassignDialogOpen || !reassignSchedule) return;
-
-    const slot = (reassignSchedule.scheduledTime as ScheduleTimeSlot | null) ?? 'morning';
-    let cancelled = false;
-    setIsLoadingReassign(true);
-    setReassignError(null);
-
-    getAvailableTechnicians(reassignSchedule.scheduledDate, slot)
-      .then((list) => {
-        if (cancelled) return;
-        setReassignCandidates(list);
-      })
-      .catch((err) => {
-        if (cancelled) return;
         console.error('Failed to load available technicians for reassignment:', err);
         setReassignCandidates([]);
+        setReassignTechnicianId('');
         setReassignError('Failed to load available technicians for this slot.');
       })
       .finally(() => {
@@ -518,7 +552,19 @@ export function ManageSchedules() {
     return () => {
       cancelled = true;
     };
-  }, [reassignDialogOpen, reassignSchedule]);
+  }, []);
+
+  /** Re-runs the reassign availability lookup for the Retry action (Req 8.4). */
+  function handleRetryReassign() {
+    if (reassignSchedule) loadReassignCandidates(reassignSchedule);
+  }
+
+  // Load technicians free for the reassignment's existing date + slot whenever
+  // the reassign dialog is open.
+  useEffect(() => {
+    if (!reassignDialogOpen || !reassignSchedule) return;
+    return loadReassignCandidates(reassignSchedule);
+  }, [reassignDialogOpen, reassignSchedule, loadReassignCandidates]);
 
   async function handleAssign() {
     if (!selectedRequest || selectedTechnicianId === '' || !scheduledDate) return;
@@ -1029,7 +1075,12 @@ export function ManageSchedules() {
         }
         actions={
           detailSchedule?.status === 'in-progress' ? (
-            <Button onClick={() => setAdminCompleteOpen(true)}>
+            <Button
+              onClick={() => {
+                setAdminCompleteError(null);
+                setAdminCompleteOpen(true);
+              }}
+            >
               <CheckCircle2Icon className="h-4 w-4 mr-1.5" />
               Complete Task
             </Button>
@@ -1152,6 +1203,7 @@ export function ManageSchedules() {
         onOpenChange={setAdminCompleteOpen}
         taskId={detailSchedule?.id ?? null}
         isSubmitting={isAdminCompleting}
+        submitError={adminCompleteError}
         onSubmit={(report, photo) => void handleAdminComplete(report, photo)}
       />
 
@@ -1248,14 +1300,29 @@ export function ManageSchedules() {
                 ))}
               </select>
 
-              {!isLoadingReassign && reassignCandidates.length === 0 && !reassignError && (
+              {/* Distinct no-technicians-available message on empty success (Req 8.5) */}
+              {!isLoadingReassign && !reassignError && reassignCandidates.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No technician is free for this date and slot. Close this and use “Reschedule” to
                   propose a new date to the customer.
                 </p>
               )}
+
+              {/* Error state with a retry action on request failure (Req 8.4) */}
               {reassignError && (
-                <p className="text-xs font-medium text-destructive">{reassignError}</p>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2">
+                  <p className="text-xs font-medium text-destructive">{reassignError}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoadingReassign}
+                    onClick={handleRetryReassign}
+                  >
+                    <RefreshCwIcon className="h-3.5 w-3.5 mr-1" />
+                    {isLoadingReassign ? 'Retrying...' : 'Retry'}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -1458,15 +1525,29 @@ export function ManageSchedules() {
                 ))}
               </select>
 
-              {/* Helper / empty states */}
-              {hasValidDate && !isLoadingAvailable && availableTechnicians.length === 0 && !availableError && (
+              {/* Distinct no-technicians-available message on empty success (Req 7.6) */}
+              {hasValidDate && !isLoadingAvailable && !availableError && availableTechnicians.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No technician is free for this date and slot. Try another slot or date, or propose
                   a reschedule.
                 </p>
               )}
+
+              {/* Error state with a retry action on request failure (Req 7.5) */}
               {availableError && (
-                <p className="text-xs font-medium text-destructive">{availableError}</p>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2">
+                  <p className="text-xs font-medium text-destructive">{availableError}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoadingAvailable}
+                    onClick={handleRetryAvailable}
+                  >
+                    <RefreshCwIcon className="h-3.5 w-3.5 mr-1" />
+                    {isLoadingAvailable ? 'Retrying...' : 'Retry'}
+                  </Button>
+                </div>
               )}
 
               {/* Availability display for the selected technician */}

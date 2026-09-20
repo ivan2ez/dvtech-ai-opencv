@@ -42,7 +42,7 @@ function landingPathForRole(role: string): string {
     case 'admin':
       return '/admin';
     case 'technician':
-      return '/technician';
+      return '/technician/tasks';
     default:
       return '/my-requests';
   }

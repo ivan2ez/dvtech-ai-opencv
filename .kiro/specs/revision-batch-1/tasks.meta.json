@@ -1,0 +1,1472 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create shared Task_Status_Enum constants (backend + frontend mirror)": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836036
+      },
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827848584
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599231
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828614385
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828892330
+      }
+    ],
+    "1.3 Add migration 042 to extend TechnicianSchedule.status ENUM with `reassigned`": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836486
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599331
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828899304
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789829446260
+      }
+    ],
+    "1.4 Create timezone utility with Slot_Time_Helper": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836612
+      },
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827849535
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599401
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828615671
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828893237
+      }
+    ],
+    "1.7 Create Availability_Service with pre-filter exclusion": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836697
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599496
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828900732
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789829444222
+      }
+    ],
+    "2.1 Add fast-check dev dependency and PBT scaffolding": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836771
+      },
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827850621
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599574
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828616258
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828894295
+      }
+    ],
+    "3.1 Wire the available-technicians endpoint to Availability_Service": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836834
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599636
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127053
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831156561
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839130559
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839145081
+      }
+    ],
+    "3.2 Update Assign modal dropdown states": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836914
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599705
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127144
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839130770
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839332009
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840349461
+      }
+    ],
+    "3.3 Update Reassign modal dropdown states and exclusion": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827836981
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599773
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127198
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839130907
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840662916
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840836990
+      }
+    ],
+    "4.1 Persist In-Progress via the shared enum on Start": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837050
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599844
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127260
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839130973
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839332958
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840348419
+      }
+    ],
+    "4.2 Reflect status from server response in the technician UI": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837127
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828599936
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127332
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131045
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841185510
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842902629
+      }
+    ],
+    "5.1 Harden completion controller multipart validation": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837188
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600005
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127403
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131101
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839334367
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840345148
+      }
+    ],
+    "5.2 Make completion atomic in the service": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837248
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600074
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127466
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131155
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840844957
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841176425
+      }
+    ],
+    "5.3 Surface specific completion error in the modal": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837310
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600149
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127531
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131224
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842922520
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843199062
+      }
+    ],
+    "6.1 Add explicit activation responses in Account_Service": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837374
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600218
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127591
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831158567
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131284
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839146471
+      }
+    ],
+    "7.1 Implement table-driven HP derivation": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837436
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600284
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789829471673
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127658
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831158909
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131348
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839147424
+      }
+    ],
+    "7.2 Enforce permitted unit types and strip \"floor\"": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837509
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600386
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127722
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131418
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839335752
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840346090
+      }
+    ],
+    "7.3 Reconcile HP/unit type and select tips by computed HP class": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837572
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600450
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127782
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131475
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840845901
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841175070
+      }
+    ],
+    "8.1 Expose per-metric line items from the ai-service": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837636
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600517
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127864
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831160321
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131544
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839148383
+      }
+    ],
+    "8.2 Implement capped, line-itemized OpenCV uplift": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837716
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600591
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127924
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131602
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839336653
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840347496
+      }
+    ],
+    "8.3 Build narrative facts from measured values and degrade gracefully": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837812
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600655
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831127977
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131667
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840356450
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840654459
+      }
+    ],
+    "9. Checkpoint — Ensure all P0 tests pass": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837889
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600742
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128036
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131728
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843226787
+      }
+    ],
+    "10.1 Prefill and reload Assign modal from requested date/slot": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827837969
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600804
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128094
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131785
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841186459
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842905706
+      }
+    ],
+    "10.2 Store the filtered date/slot on save using Manila date": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838029
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600867
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128165
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131865
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842921389
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843196862
+      }
+    ],
+    "11.1 Add migration 044 and ScheduleReassignment model": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838106
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828600934
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128234
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131933
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839164103
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839319359
+      }
+    ],
+    "11.2 Rewrite reassignTechnician as an atomic, audited transfer": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838169
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601014
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128290
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839131999
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840847297
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841177383
+      }
+    ],
+    "12.1 Compute reschedule expiry via shared helper": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838229
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601079
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128347
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132085
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839165574
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839321111
+      }
+    ],
+    "12.2 Make expiry transition idempotent with a scheduled trigger": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838294
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601149
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128409
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132177
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840664015
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840836117
+      }
+    ],
+    "12.3 (Optional) Add migration 046 for reschedule_window_ends_at column": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838386
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601250
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128471
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132235
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843225885
+      }
+    ],
+    "13.1 Add placeholder quotation status constants module": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838446
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601316
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828901671
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789829445047
+      }
+    ],
+    "13.2 Add migration 045 and Quotation model": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838506
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601381
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128533
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132295
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839166153
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839320303
+      }
+    ],
+    "13.3 Implement quotationService with ownership scoping": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838562
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601448
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128589
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132347
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840358796
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840649843
+      }
+    ],
+    "13.4 Add quotation routes/controllers and Awaiting-Scheduling gating": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838616
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601509
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128654
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132406
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840849341
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841179587
+      }
+    ],
+    "13.5 Build My_Quotations customer page": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838687
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601574
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128709
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132463
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842918093
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843194536
+      }
+    ],
+    "13.6 Build Manage_Quotations admin page": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838742
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601662
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128772
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132526
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842919056
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843198300
+      }
+    ],
+    "14.1 Add server-side start-time gate": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838798
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601724
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128831
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132586
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840848249
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841178764
+      }
+    ],
+    "14.2 Disable Start control in MyTasks until startable": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838853
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601795
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128895
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132646
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842920442
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843195898
+      }
+    ],
+    "15. Checkpoint — Ensure all P1 tests pass": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838912
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601857
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831128949
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132708
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843228260
+      }
+    ],
+    "16.1 Implement scroll-into-view and focus on new result": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827838966
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601926
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129010
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132768
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841187882
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842903568
+      }
+    ],
+    "16.2 Add \"Result ready\" hint and submit loading state": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839022
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828601990
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129070
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132829
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841188791
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842905002
+      }
+    ],
+    "17.1 Remove Dashboard route, nav, and land on My Tasks": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839079
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828602055
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129133
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132914
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840360257
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840651246
+      }
+    ],
+    "18.1 Make ManageProducts a single continuous list": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839160
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828602126
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129214
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839132972
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840360913
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840652186
+      }
+    ],
+    "19.1 Add migration 043 removing `busy` with mandatory data conversion": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839214
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828602190
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129275
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831161033
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839133034
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839149538
+      }
+    ],
+    "19.2 Drop `busy` from model, API, sync, and UI": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839273
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828602283
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129330
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839133094
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840357401
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840653599
+      }
+    ],
+    "21. Final checkpoint — Ensure all tests pass": [
+      {
+        "executionId": "a196b139-ad5c-4e7d-b54d-61777db6f663",
+        "chatSessionId": "sess_dce32897-66bf-4411-8913-476c66d588fd",
+        "timestamp": 1789827839329
+      },
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828602351
+      },
+      {
+        "executionId": "1d0f5641-5c34-4aaf-8d03-6ecda6a3c0c8",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789831129387
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839133150
+      },
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843228869
+      }
+    ],
+    "2. Add fast-check and configure property-based testing": [
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789828894365
+      }
+    ],
+    "1. Establish shared building blocks (Task_Status_Enum, timezone/Slot_Time_Helper, Availability_Service)": [
+      {
+        "executionId": "8d979448-3218-4a55-91c4-606ef422a26f",
+        "chatSessionId": "sess_e2dc15a1-e0d7-47d7-b294-ac2b11f12aa2",
+        "timestamp": 1789829446381
+      }
+    ],
+    "6. P0 — A7: Reliable technician activation": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789839146548
+      }
+    ],
+    "17. P2 — T1: Remove the technician Dashboard": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840651338
+      }
+    ],
+    "18. P2 — T3: Continuous-scrolling products catalog": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840652278
+      }
+    ],
+    "19. P2 — A8: Remove the `busy` availability state": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840653703
+      }
+    ],
+    "8. P0 — C3: Consistent, non-inflated OpenCV-assisted recommendations": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840654560
+      }
+    ],
+    "3. P0 — A2/A3: Reliable Assign & Reassign available-technician dropdowns": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789840837079
+      }
+    ],
+    "7. P0 — C1: Deterministic HP and permitted unit types": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841175163
+      }
+    ],
+    "11. P1 — A4: Reassignment transfers the schedule and records an audit trail": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789841177446
+      }
+    ],
+    "4. P0 — T5: Consistent In-Progress status across Start and Complete": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842902721
+      }
+    ],
+    "16. P2 — C2: Bring the AI result into view": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789842905065
+      }
+    ],
+    "14. P1 — T2: Block Start before the assigned date and slot": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843196004
+      }
+    ],
+    "10. P1 — A1: Assign modal prefills requested date and slot": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843196930
+      }
+    ],
+    "13. P1 — C4/A6: Quotation model, status vocabulary, and My/Manage Quotations": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843198396
+      }
+    ],
+    "5. P0 — T4: Reliable completion report submission": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843199158
+      }
+    ],
+    "12. P1 — A5: Reschedule expiry = earlier of +48h or slot start": [
+      {
+        "executionId": "8822f689-5df5-40b6-ab99-5b524f295587",
+        "chatSessionId": "sess_6626d99d-b731-449d-a327-1bc340ba65ad",
+        "timestamp": 1789843225970
+      }
+    ]
+  }
+}

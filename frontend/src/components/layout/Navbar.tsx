@@ -58,11 +58,13 @@ function getNavLinks(role: UserRole | null): NavLink[] {
         { label: 'Dashboard', to: '/admin' },
       ];
     case 'technician':
+      // Technicians have no dashboard (removed per revisions) — the top-bar
+      // entry leads into My Tasks.
       return [
         { label: 'Home', to: '/' },
         { label: 'Services', to: '/services' },
         { label: 'Products', to: '/products' },
-        { label: 'Dashboard', to: '/technician' },
+        { label: 'My Tasks', to: '/technician/tasks' },
       ];
     default:
       return [

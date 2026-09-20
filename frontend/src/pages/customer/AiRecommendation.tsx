@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { ArrowDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,8 @@ import {
   type OpenCVAnalysis,
   type TieredProductInfo,
 } from '@/services/aiApi';
+import { createQuotation } from '@/services/quotationApi';
+import { getApiErrorMessage } from '@/lib/utils';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
@@ -240,6 +243,81 @@ export function AiRecommendation() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Product whose "Request Quotation" modal is open.
   const [quoteProduct, setQuoteProduct] = useState<TieredProductInfo | null>(null);
+  // Optional customer note carried on the quotation request.
+  const [quoteDetails, setQuoteDetails] = useState('');
+  // In-flight state + inline error for the quotation submission.
+  const [isRequestingQuote, setIsRequestingQuote] = useState(false);
+  const [quoteError, setQuoteError] = useState('');
+
+  // --- C2: bring the AI result into view (Req 2) ---
+  // Container + heading of the result card; used to scroll/focus on a new result.
+  const resultRef = useRef<HTMLDivElement>(null);
+  const resultHeadingRef = useRef<HTMLDivElement>(null);
+  // Tracks whether the top of the result is currently outside the viewport,
+  // which drives the floating "Result ready" hint control (Req 2.2, 2.3).
+  const [resultOffscreen, setResultOffscreen] = useState(false);
+  // The recommendation id we last scrolled to, so we only scroll on a *new*
+  // result rather than on every render (Req 2.6).
+  const lastScrolledIdRef = useRef<number | null>(null);
+  // Guards against concurrent submissions while a request is in flight (Req 2.7).
+  const inFlightRef = useRef(false);
+
+  /** Returns the scroll behavior honoring the user's reduced-motion setting (Req 2.4). */
+  function getScrollBehavior(): ScrollBehavior {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return 'auto';
+    }
+    return 'smooth';
+  }
+
+  /** Scrolls the result container into view. */
+  const scrollToResult = useCallback(() => {
+    resultRef.current?.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: 'start',
+    });
+  }, []);
+
+  // On loading -> loaded of a NEW recommendation id, scroll the result into view
+  // and move focus to the heading without triggering the browser-native focus
+  // scroll (Req 2.1, 2.5, 2.6). Failures never reach here (result stays null),
+  // so scroll position is left unchanged on failure (Req 2.8).
+  const currentResultId = result?.recommendation.id ?? null;
+  useEffect(() => {
+    if (currentResultId === null) return;
+    if (lastScrolledIdRef.current === currentResultId) return;
+    lastScrolledIdRef.current = currentResultId;
+    // Defer to the next frame so the result container is mounted/laid out.
+    requestAnimationFrame(() => {
+      scrollToResult();
+      resultHeadingRef.current?.focus({ preventScroll: true });
+    });
+  }, [currentResultId, scrollToResult]);
+
+  // Observe the result container so the "Result ready" hint appears only while
+  // the top of the result is off-screen and hides when it scrolls into view
+  // (Req 2.2, 2.3).
+  useEffect(() => {
+    const el = resultRef.current;
+    if (!el) {
+      setResultOffscreen(false);
+      return;
+    }
+    if (typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setResultOffscreen(!entry.isIntersecting);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [currentResultId]);
 
   const form = useForm<RoomAssessmentFormValues>({
     resolver: zodResolver(roomAssessmentSchema) as unknown as Resolver<RoomAssessmentFormValues>,
@@ -252,15 +330,34 @@ export function AiRecommendation() {
     },
   });
 
-  /** Sends the customer to the booking form pre-filled to quote this unit. */
-  function requestQuotation(product: TieredProductInfo) {
-    navigate('/service-request', {
-      state: {
-        serviceName: 'Installation',
-        installBrand: product.brand,
-        installModel: product.model,
-      },
-    });
+  /**
+   * Submits a quotation request for the chosen unit (C4 write path — Req 4).
+   * The brand/model come from the selected product; the customer may add an
+   * optional note. On success we close the dialog and send them to My
+   * Quotations to track it; on failure the server message is shown inline.
+   */
+  async function requestQuotation(product: TieredProductInfo) {
+    if (isRequestingQuote) return;
+    setIsRequestingQuote(true);
+    setQuoteError('');
+    try {
+      const details = quoteDetails.trim();
+      await createQuotation({
+        brand: product.brand,
+        model: product.model,
+        details: details.length > 0 ? details : undefined,
+      });
+      setQuoteProduct(null);
+      setQuoteDetails('');
+      toast.success('Quotation requested — track it in My Quotations');
+      navigate('/my-quotations');
+    } catch (error: unknown) {
+      setQuoteError(
+        getApiErrorMessage(error, 'Failed to request a quotation. Please try again.'),
+      );
+    } finally {
+      setIsRequestingQuote(false);
+    }
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -286,6 +383,9 @@ export function AiRecommendation() {
   }
 
   async function onSubmit(values: RoomAssessmentFormValues) {
+    // Reject additional submissions while a request is already in flight (Req 2.7).
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setIsSubmitting(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -318,6 +418,7 @@ export function AiRecommendation() {
       }
     } finally {
       setIsSubmitting(false);
+      inFlightRef.current = false;
     }
   }
 
@@ -490,9 +591,16 @@ export function AiRecommendation() {
       </Card>
 
       {result && (
-        <Card>
+        <Card ref={resultRef}>
           <CardHeader>
-            <CardTitle className="text-xl">AI Recommendation Result</CardTitle>
+            <CardTitle
+              className="text-xl"
+              tabIndex={-1}
+              ref={resultHeadingRef}
+              aria-live="polite"
+            >
+              AI Recommendation Result
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
@@ -698,7 +806,16 @@ export function AiRecommendation() {
       )}
 
       {/* Product detail + Request Quotation modal */}
-      <Dialog open={quoteProduct !== null} onOpenChange={(open) => !open && setQuoteProduct(null)}>
+      <Dialog
+        open={quoteProduct !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setQuoteProduct(null);
+            setQuoteDetails('');
+            setQuoteError('');
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -724,18 +841,59 @@ export function AiRecommendation() {
               {quoteProduct.description && (
                 <p className="text-sm text-muted-foreground">{quoteProduct.description}</p>
               )}
+
+              {/* Optional note carried on the quotation request. */}
+              <div className="space-y-1.5 pt-1">
+                <label htmlFor="quote-details" className="text-sm font-medium">
+                  Additional details (optional)
+                </label>
+                <textarea
+                  id="quote-details"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  placeholder="Anything specific about your space or budget?"
+                  maxLength={2000}
+                  value={quoteDetails}
+                  onChange={(e) => setQuoteDetails(e.target.value)}
+                />
+              </div>
+
+              {quoteError && (
+                <p className="text-sm font-medium text-destructive">{quoteError}</p>
+              )}
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setQuoteProduct(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setQuoteProduct(null)}
+              disabled={isRequestingQuote}
+            >
               Close
             </Button>
-            <Button onClick={() => quoteProduct && requestQuotation(quoteProduct)}>
-              Request Quotation
+            <Button
+              onClick={() => quoteProduct && void requestQuotation(quoteProduct)}
+              disabled={isRequestingQuote}
+            >
+              {isRequestingQuote ? 'Requesting...' : 'Request Quotation'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Floating "Result ready" hint — visible only while the result top is
+          off-screen; clicking it scrolls to the result (Req 2.2, 2.3). */}
+      {result && resultOffscreen && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+          <Button
+            type="button"
+            onClick={scrollToResult}
+            className="shadow-lg rounded-full"
+          >
+            <ArrowDown className="h-4 w-4" aria-hidden="true" />
+            Result ready
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

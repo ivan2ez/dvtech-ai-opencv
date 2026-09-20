@@ -31,7 +31,7 @@ import {
   MapPin,
   Phone,
   Mail,
-  Facebook,
+  Globe,
 } from 'lucide-react';
 
 import { BrandCarousel } from '@/components/home/BrandCarousel';
@@ -58,7 +58,11 @@ export function HomePage() {
       <Navbar />
 
       {/* Hero Section */}
-      <HeroSection isAuthenticated={isAuthenticated} />
+      <HeroSection
+        isAuthenticated={isAuthenticated}
+        dashboardPath={dashboardPath}
+        dashboardLabel={dashboardLabel}
+      />
 
       {/* Brand Carousel */}
       <BrandCarousel />
@@ -75,7 +79,11 @@ export function HomePage() {
 
 
       {/* CTA Section */}
-      <CTASection isAuthenticated={isAuthenticated} />
+      <CTASection
+        isAuthenticated={isAuthenticated}
+        dashboardPath={dashboardPath}
+        dashboardLabel={dashboardLabel}
+      />
 
       {/* Footer */}
       <FooterSection />
@@ -84,7 +92,15 @@ export function HomePage() {
 }
 
 /* ─── Hero Section ─── */
-function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+function HeroSection({
+  isAuthenticated,
+  dashboardPath,
+  dashboardLabel,
+}: {
+  isAuthenticated: boolean;
+  dashboardPath: string;
+  dashboardLabel: string;
+}) {
   return (
     <section className="relative overflow-hidden py-20 md:py-28 lg:py-36">
       {/* Subtle background */}
@@ -463,7 +479,15 @@ function HowItWorksSection() {
 }
 
 /* ─── CTA Section ─── */
-function CTASection({ isAuthenticated }: { isAuthenticated: boolean }) {
+function CTASection({
+  isAuthenticated,
+  dashboardPath,
+  dashboardLabel,
+}: {
+  isAuthenticated: boolean;
+  dashboardPath: string;
+  dashboardLabel: string;
+}) {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
@@ -619,7 +643,7 @@ function FooterSection() {
                 </a>
               </li>
               <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Facebook className="h-4 w-4 shrink-0 mt-0.5" />
+                <Globe className="h-4 w-4 shrink-0 mt-0.5" />
                 <a
                   href="https://www.facebook.com/DVTechSuppliesandServicesIncorporated"
                   target="_blank"

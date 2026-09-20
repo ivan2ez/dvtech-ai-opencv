@@ -22,7 +22,7 @@ export interface TechnicianAccount {
   technicianDetail?: {
     specialization: string;
     contactNumber: string;
-    availabilityStatus: 'available' | 'busy' | 'unavailable';
+    availabilityStatus: 'available' | 'unavailable';
     street?: string | null;
     barangay?: string | null;
     city?: string | null;

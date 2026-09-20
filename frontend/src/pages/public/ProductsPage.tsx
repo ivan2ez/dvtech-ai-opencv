@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ArrowUpDown, Package, ChevronLeft, ChevronRight, XIcon, Zap, Flame } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,12 @@ import {
 } from '@/components/ui/select';
 
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { useAuth } from '@/hooks/useAuth';
 import type { AirconProduct, PaginatedResponse } from '@/types';
 import { getProducts, getProductImages, type ProductImageData } from '@/services/productApi';
 import { getBrands, type Brand } from '@/services/brandApi';
+import { createQuotation } from '@/services/quotationApi';
+import { getApiErrorMessage } from '@/lib/utils';
 
 const PRODUCT_TYPES = [
   { value: '', label: 'All Types' },
@@ -61,6 +65,9 @@ function getImageSrc(imageUrl: string | undefined): string {
 
 export function ProductsPage() {
   const navigate = useNavigate();
+  // This is a public page, so a guest may be browsing. Quotations require an
+  // authenticated customer, so we gate the request on auth state.
+  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState<AirconProduct[]>([]);
   const [pagination, setPagination] = useState<PaginatedResponse<AirconProduct>['pagination']>({
     page: 1,
@@ -81,6 +88,9 @@ export function ProductsPage() {
   const [productImages, setProductImages] = useState<ProductImageData[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
+  // In-flight state + inline error for the "Request Quotation" submission.
+  const [isRequestingQuote, setIsRequestingQuote] = useState(false);
+  const [quoteError, setQuoteError] = useState('');
 
   const fetchProducts = useCallback(async (page = 1) => {
     setIsLoading(true);
@@ -148,21 +158,43 @@ export function ProductsPage() {
     setSelectedProduct(null);
     setProductImages([]);
     setActiveImageIndex(0);
+    setQuoteError('');
   }
 
   /**
-   * Sends the customer to the booking form pre-filled to quote this unit —
-   * same deep-link pattern the AI recommendation page uses (Installation
-   * service + brand/model in router state).
+   * Submits a real quotation request for the chosen unit (C4 write path — Req 4),
+   * mirroring the AI recommendation page. Guests can browse this public page but
+   * cannot request quotations, so we send them to log in first. On success we
+   * close the dialog and send the customer to My Quotations to track it; on
+   * failure the server message is shown inline and the dialog stays open.
    */
-  function requestQuotation(product: AirconProduct) {
-    navigate('/service-request', {
-      state: {
-        serviceName: 'Installation',
-        installBrand: product.brand,
-        installModel: product.model,
-      },
-    });
+  async function requestQuotation(product: AirconProduct) {
+    if (isRequestingQuote) return;
+
+    // Guests cannot use quotations — prompt them to log in instead.
+    if (!isAuthenticated) {
+      toast.error('Please log in to request a quotation.');
+      navigate('/login');
+      return;
+    }
+
+    setIsRequestingQuote(true);
+    setQuoteError('');
+    try {
+      await createQuotation({ brand: product.brand, model: product.model });
+      handleCloseProduct();
+      toast.success('Quotation requested — track it in My Quotations');
+      navigate('/my-quotations');
+    } catch (error: unknown) {
+      const message = getApiErrorMessage(
+        error,
+        'Failed to request a quotation. Please try again.',
+      );
+      setQuoteError(message);
+      toast.error(message);
+    } finally {
+      setIsRequestingQuote(false);
+    }
   }
 
   function nextImage() {
@@ -411,12 +443,19 @@ export function ProductsPage() {
                 )}
               </div>
 
+              {quoteError && (
+                <p className="text-sm font-medium text-destructive">{quoteError}</p>
+              )}
+
               <DialogFooter>
-                <Button variant="outline" onClick={handleCloseProduct}>
+                <Button variant="outline" onClick={handleCloseProduct} disabled={isRequestingQuote}>
                   Close
                 </Button>
-                <Button onClick={() => requestQuotation(selectedProduct)}>
-                  Request Quotation
+                <Button
+                  onClick={() => void requestQuotation(selectedProduct)}
+                  disabled={isRequestingQuote}
+                >
+                  {isRequestingQuote ? 'Requesting...' : 'Request Quotation'}
                 </Button>
               </DialogFooter>
             </>

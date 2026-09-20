@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { CustomerLayout } from './components/layouts/CustomerLayout';
 import { DashboardLayout } from './components/layouts/DashboardLayout';
@@ -12,13 +12,14 @@ import { ManageProducts } from './pages/admin/ManageProducts';
 import { ManageBrands } from './pages/admin/ManageBrands';
 import { ManageBtuFactors } from './pages/admin/ManageBtuFactors';
 import { ManageServices } from './pages/admin/ManageServices';
+import { ManageQuotations } from './pages/admin/ManageQuotations';
 import { ProductsPage } from './pages/public/ProductsPage';
 import { ServicesPage } from './pages/public/ServicesPage';
 import { ServiceRequestForm } from './pages/customer/ServiceRequestForm';
 import { MyRequests } from './pages/customer/MyRequests';
+import { MyQuotations } from './pages/customer/MyQuotations';
 import { ManageRequests } from './pages/admin/ManageRequests';
 import { ManageSchedules } from './pages/admin/ManageSchedules';
-import { TechnicianDashboard } from './pages/technician/TechnicianDashboard';
 import { MyTasks } from './pages/technician/MyTasks';
 import { TaskDetail } from './pages/technician/TaskDetail';
 import { AiRecommendation } from './pages/customer/AiRecommendation';
@@ -59,6 +60,7 @@ function App() {
           <Route element={<CustomerLayout />}>
             <Route path="/service-request" element={<ServiceRequestForm />} />
             <Route path="/my-requests" element={<MyRequests />} />
+            <Route path="/my-quotations" element={<MyQuotations />} />
             <Route path="/ai-recommendation" element={<AiRecommendation />} />
             <Route path="/troubleshooting" element={<Troubleshooting />} />
             <Route path="/chat" element={<ChatPage />} />
@@ -71,6 +73,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/requests" element={<ManageRequests />} />
             <Route path="/admin/schedules" element={<ManageSchedules />} />
+            <Route path="/admin/quotations" element={<ManageQuotations />} />
             <Route path="/admin/products" element={<ManageProducts />} />
             <Route path="/admin/brands" element={<ManageBrands />} />
             <Route path="/admin/services" element={<ManageServices />} />
@@ -83,7 +86,7 @@ function App() {
         {/* Technician routes */}
         <Route element={<ProtectedRoute allowedRoles={['technician']} />}>
           <Route element={<DashboardLayout />}>
-            <Route path="/technician" element={<TechnicianDashboard />} />
+            <Route path="/technician" element={<Navigate to="/technician/tasks" replace />} />
             <Route path="/technician/tasks" element={<MyTasks />} />
             <Route path="/technician/tasks/:id" element={<TaskDetail />} />
           </Route>

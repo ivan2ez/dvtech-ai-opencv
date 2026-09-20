@@ -153,7 +153,7 @@ export interface AssignedTechnicianSchedule {
     technicianDetail?: {
       specialization: string;
       contactNumber: string;
-      availabilityStatus: 'available' | 'busy' | 'unavailable';
+      availabilityStatus: 'available' | 'unavailable';
       street?: string | null;
       barangay?: string | null;
       city?: string | null;
@@ -227,7 +227,7 @@ export interface ServiceRequestFormData {
   serviceRequiredTime: ServiceTimeSlot;
 }
 
-export type ScheduleStatus = 'assigned' | 'accepted' | 'rejected' | 'in-progress' | 'completed';
+export type ScheduleStatus = 'assigned' | 'accepted' | 'rejected' | 'reassigned' | 'in-progress' | 'completed';
 export type SchedulePriority = 'low' | 'medium' | 'high';
 
 export type ScheduleTimeSlot = 'morning' | 'afternoon';
@@ -244,6 +244,12 @@ export interface TechnicianSchedule {
   reportPhotoPath: string | null;
   rejectionReason: string | null;
   completedAt: string | null;
+  /**
+   * Manila slot start instant (ISO string) — the boundary at/after which the
+   * task may be started. Null when the date/slot cannot be resolved. The Start
+   * control is disabled while `Date.now()` is before this instant (Req 15.2–15.4).
+   */
+  startableAt?: string | null;
   createdAt: string;
   updatedAt: string;
   serviceRequest?: ServiceRequest & {
@@ -264,7 +270,7 @@ export interface TechnicianSchedule {
     technicianDetail?: {
       specialization: string;
       contactNumber: string;
-      availabilityStatus: 'available' | 'busy' | 'unavailable';
+      availabilityStatus: 'available' | 'unavailable';
       street?: string | null;
       barangay?: string | null;
       city?: string | null;
@@ -280,7 +286,7 @@ export interface TechnicianInfo {
   technicianDetail?: {
     specialization: string;
     contactNumber: string;
-    availabilityStatus: 'available' | 'busy' | 'unavailable';
+    availabilityStatus: 'available' | 'unavailable';
     street?: string | null;
     barangay?: string | null;
     city?: string | null;
@@ -306,7 +312,7 @@ export interface AvailableTechnician {
   name: string;
   email: string;
   contactNumber: string | null;
-  availabilityStatus: 'available' | 'busy' | 'unavailable';
+  availabilityStatus: 'available' | 'unavailable';
   tasksOnDate: number;
 }
 

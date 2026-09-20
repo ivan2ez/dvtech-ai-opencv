@@ -47,7 +47,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
-import type { AirconProduct, PaginatedResponse } from '@/types';
+import type { AirconProduct } from '@/types';
 import {
   getProducts,
   createProduct,
@@ -128,12 +128,6 @@ type SortDirection = 'asc' | 'desc';
 
 export function ManageProducts() {
   const [products, setProducts] = useState<AirconProduct[]>([]);
-  const [pagination, setPagination] = useState<PaginatedResponse<AirconProduct>['pagination']>({
-    page: 1,
-    pageSize: 10,
-    totalItems: 0,
-    totalPages: 0,
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -188,13 +182,28 @@ export function ManageProducts() {
     },
   });
 
-  const fetchProducts = useCallback(async (page = 1) => {
+  // The catalog is presented as a single continuous list (Req 16.1), so we
+  // pull every page from the paginated API and accumulate the rows. The
+  // backend caps pageSize (currently 20), so we fetch page 1 to learn the
+  // total page count, then request the remaining pages in parallel.
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getProducts({ page, pageSize: 10 });
-      setProducts(response.data);
-      setPagination(response.pagination);
+      const first = await getProducts({ page: 1 });
+      const { totalPages, pageSize } = first.pagination;
+      let allProducts = first.data;
+
+      if (totalPages > 1) {
+        const remaining = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            getProducts({ page: i + 2, pageSize })
+          )
+        );
+        allProducts = allProducts.concat(...remaining.map((r) => r.data));
+      }
+
+      setProducts(allProducts);
     } catch (err) {
       console.error('Failed to fetch products:', err);
       setError('Failed to load products. Please try again.');
@@ -279,7 +288,7 @@ export function ManageProducts() {
       await deleteProduct(deletingProduct.id);
       setDeleteDialogOpen(false);
       setDeletingProduct(null);
-      await fetchProducts(pagination.page);
+      await fetchProducts();
       toast.success(`${label} deactivated.`);
     } catch (err) {
       console.error('Failed to delete product:', err);
@@ -296,7 +305,7 @@ export function ManageProducts() {
     try {
       await archiveProduct(archivingProduct.id);
       setArchivingProduct(null);
-      await fetchProducts(pagination.page);
+      await fetchProducts();
       setArchiveRefreshKey((k) => k + 1);
       toast.success(`${label} moved to the archive.`);
     } catch (err) {
@@ -316,7 +325,7 @@ export function ManageProducts() {
         await createProduct(values);
       }
       setDialogOpen(false);
-      await fetchProducts(pagination.page);
+      await fetchProducts();
       toast.success(
         isEditing
           ? `${values.brand} ${values.model} updated.`
@@ -615,7 +624,7 @@ export function ManageProducts() {
         <div className="flex items-center justify-center py-6">
           <div className="text-center space-y-4">
             <p className="text-destructive">{error}</p>
-            <Button variant="outline" onClick={() => { setError(null); void fetchProducts(pagination.page); }}>
+            <Button variant="outline" onClick={() => { setError(null); void fetchProducts(); }}>
               Retry
             </Button>
           </div>
@@ -792,31 +801,12 @@ export function ManageProducts() {
             )}
           </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <p className="text-sm text-muted-foreground">
-                Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalItems} total)
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pagination.page <= 1}
-                  onClick={() => void fetchProducts(pagination.page - 1)}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => void fetchProducts(pagination.page + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Total count reflecting the active search / Type filter (Req 16.3).
+              Replaces the former page-of-pages text and paging controls. */}
+          <p className="pt-4 text-sm text-muted-foreground">
+            {filteredProducts.length}{' '}
+            {filteredProducts.length === 1 ? 'product' : 'products'}
+          </p>
         </>
       )}
       </>

@@ -592,8 +592,6 @@ export function ManageAccounts() {
     switch (status) {
       case 'available':
         return 'default' as const;
-      case 'busy':
-        return 'secondary' as const;
       case 'unavailable':
         return 'destructive' as const;
       default:

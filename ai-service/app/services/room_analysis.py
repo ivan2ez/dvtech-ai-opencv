@@ -20,16 +20,61 @@ from dataclasses import dataclass, field
 
 @dataclass
 class RoomAnalysisResult:
-    """Structured result from OpenCV room image analysis."""
+    """
+    Structured result from OpenCV room image analysis.
+
+    Exposes each room characteristic as a discrete, labeled metric so the
+    backend can line-itemize the BTU uplift (windows, insulation, sunlight,
+    heat sources) instead of receiving an opaque aggregate/appliance count.
+    """
 
     window_count: int
-    sunlight_exposure: str  # "low", "medium", "high"
+    sunlight_exposure: str  # "low", "medium", "high" (kept for backward compatibility)
     heat_sources: List[str]
     insulation_quality: str  # "poor", "fair", "good"
     brightness_score: float  # 0.0 - 1.0
     contrast_score: float  # 0.0 - 1.0
     warm_area_ratio: float  # 0.0 - 1.0 (ratio of warm-colored pixels)
     details: dict = field(default_factory=dict)
+
+    @property
+    def sunlight_level(self) -> str:
+        """Discrete sunlight level metric ('low' | 'medium' | 'high')."""
+        return self.sunlight_exposure
+
+    @property
+    def heat_source_count(self) -> int:
+        """Discrete count of distinct labeled heat sources."""
+        return len(self.heat_sources)
+
+    def as_metrics(self) -> List[dict]:
+        """
+        Return the discrete room characteristics as a flat list of labeled
+        line items. Each entry is ``{"key", "label", "value"}`` so the backend
+        can iterate and line-itemize the BTU uplift directly.
+        """
+        return [
+            {
+                "key": "window_count",
+                "label": "Windows",
+                "value": self.window_count,
+            },
+            {
+                "key": "insulation_quality",
+                "label": "Insulation quality",
+                "value": self.insulation_quality,
+            },
+            {
+                "key": "sunlight_level",
+                "label": "Sunlight level",
+                "value": self.sunlight_level,
+            },
+            {
+                "key": "heat_sources",
+                "label": "Heat sources",
+                "value": self.heat_sources,
+            },
+        ]
 
 
 # --- Window Detection ---

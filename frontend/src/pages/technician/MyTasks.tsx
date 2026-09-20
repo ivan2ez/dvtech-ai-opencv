@@ -16,7 +16,9 @@ import {
 
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { CompleteTaskDialog } from '@/components/technician/CompleteTaskDialog';
+import { getApiErrorMessage } from '@/lib/utils';
 import type { TechnicianSchedule, SchedulePriority } from '@/types';
+import { TASK_STATUS, STARTABLE_STATUSES } from '@/constants/taskStatus';
 import {
   getSchedules,
   startTask,
@@ -54,6 +56,22 @@ function formatDate(dateStr: string): string {
   });
 }
 
+/**
+ * Renders the Manila slot-start boundary as a readable date + time of day.
+ * The instant is fixed (ISO string carrying the +08:00 offset from the API);
+ * we display it in the Manila timezone so it matches the assigned slot.
+ */
+function formatStartableAt(startableAt: string): string {
+  return new Date(startableAt).toLocaleString('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function getCustomerName(schedule: TechnicianSchedule): string {
   return schedule.serviceRequest?.user?.name ?? `User #${schedule.serviceRequest?.userId ?? '—'}`;
 }
@@ -74,6 +92,7 @@ export function MyTasks() {
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [completeTaskId, setCompleteTaskId] = useState<number | null>(null);
   const [isSubmittingComplete, setIsSubmittingComplete] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   const fetchSchedules = useCallback(async () => {
     setIsLoading(true);
@@ -93,12 +112,18 @@ export function MyTasks() {
     void fetchSchedules();
   }, [fetchSchedules]);
 
-  // Filter
+  // Filter — driven by the shared Task_Status_Enum so the tabs and the server
+  // status vocabulary stay in lockstep. A reassigned task behaves like an
+  // assigned one for the technician, so it lives under the "Assigned" tab.
   const filteredSchedules = allSchedules.filter((s) => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'assigned') return s.status === 'assigned';
-    if (activeFilter === 'in-progress') return s.status === 'in-progress';
-    if (activeFilter === 'completed') return s.status === 'completed' || s.status === 'rejected';
+    if (activeFilter === 'assigned') {
+      return s.status === TASK_STATUS.Assigned || s.status === TASK_STATUS.Reassigned;
+    }
+    if (activeFilter === 'in-progress') return s.status === TASK_STATUS.InProgress;
+    if (activeFilter === 'completed') {
+      return s.status === TASK_STATUS.Completed || s.status === TASK_STATUS.Rejected;
+    }
     return true;
   });
 
@@ -153,13 +178,14 @@ export function MyTasks() {
 
   function handleOpenCompleteDialog(id: number) {
     setCompleteTaskId(id);
+    setCompleteError(null);
     setCompleteDialogOpen(true);
   }
 
   async function handleComplete(report: string, photo: File) {
     if (!completeTaskId) return;
     setIsSubmittingComplete(true);
-    setError(null);
+    setCompleteError(null);
     try {
       const id = completeTaskId;
       await completeTask(completeTaskId, report, photo);
@@ -167,9 +193,12 @@ export function MyTasks() {
       setCompleteTaskId(null);
       await fetchSchedules();
       toast.success(`Task #${id} marked as completed.`);
-    } catch {
-      // The axios interceptor surfaces the backend message via toast.
-      setError('Failed to complete the task. Please try again.');
+    } catch (err) {
+      // Surface the specific server message inline in the modal (Req 17.10);
+      // keep the dialog open so the technician can read it and retry.
+      setCompleteError(
+        getApiErrorMessage(err, 'Failed to complete the task. Please try again.'),
+      );
     } finally {
       setIsSubmittingComplete(false);
     }
@@ -194,10 +223,14 @@ export function MyTasks() {
           const count = tab.key === 'all'
             ? allSchedules.length
             : tab.key === 'assigned'
-              ? allSchedules.filter((s) => s.status === 'assigned').length
+              ? allSchedules.filter(
+                  (s) => s.status === TASK_STATUS.Assigned || s.status === TASK_STATUS.Reassigned,
+                ).length
               : tab.key === 'in-progress'
-                ? allSchedules.filter((s) => s.status === 'in-progress').length
-                : allSchedules.filter((s) => s.status === 'completed' || s.status === 'rejected').length;
+                ? allSchedules.filter((s) => s.status === TASK_STATUS.InProgress).length
+                : allSchedules.filter(
+                    (s) => s.status === TASK_STATUS.Completed || s.status === TASK_STATUS.Rejected,
+                  ).length;
 
           return (
             <button
@@ -373,6 +406,7 @@ export function MyTasks() {
         onOpenChange={setCompleteDialogOpen}
         taskId={completeTaskId}
         isSubmitting={isSubmittingComplete}
+        submitError={completeError}
         onSubmit={(report, photo) => void handleComplete(report, photo)}
       />
     </div>
@@ -390,14 +424,49 @@ interface TaskActionsProps {
 }
 
 function TaskActions({ schedule, isLoading, onStartWork, onUndo, onComplete }: TaskActionsProps) {
+  // A reassigned task is startable by the new technician exactly like an
+  // assigned one (Req 9.8), so both statuses expose the Start control.
+  const isStartable = STARTABLE_STATUSES.includes(schedule.status);
+
+  // The becomes-startable boundary is the Manila slot start instant returned by
+  // the API (Req 15.1). While the current time is before it, the Start control
+  // stays disabled and the boundary is shown to the technician (Req 15.2, 15.3);
+  // at/after it the control enables (Req 15.4). We tick every 30s so the control
+  // flips on its own when the slot arrives, without a manual refresh.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isStartable || !schedule.startableAt) return;
+    const boundary = Date.parse(schedule.startableAt);
+    if (Number.isNaN(boundary) || now >= boundary) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [isStartable, schedule.startableAt, now]);
+
+  const startableBoundary =
+    schedule.startableAt != null ? Date.parse(schedule.startableAt) : NaN;
+  const notYetStartable =
+    isStartable && !Number.isNaN(startableBoundary) && now < startableBoundary;
+
   return (
     <div className="flex items-center gap-2">
-      {schedule.status === 'assigned' && (
-        <Button variant="default" size="sm" disabled={isLoading} onClick={onStartWork}>
-          Start
-        </Button>
+      {isStartable && (
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={isLoading || notYetStartable}
+            onClick={onStartWork}
+          >
+            Start
+          </Button>
+          {notYetStartable && schedule.startableAt && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Startable {formatStartableAt(schedule.startableAt)}
+            </span>
+          )}
+        </div>
       )}
-      {schedule.status === 'in-progress' && (
+      {schedule.status === TASK_STATUS.InProgress && (
         <>
           <Button variant="outline" size="sm" disabled={isLoading} onClick={onUndo}>
             Undo
@@ -407,10 +476,10 @@ function TaskActions({ schedule, isLoading, onStartWork, onUndo, onComplete }: T
           </Button>
         </>
       )}
-      {schedule.status === 'completed' && (
+      {schedule.status === TASK_STATUS.Completed && (
         <span className="text-xs text-muted-foreground">Done</span>
       )}
-      {schedule.status === 'rejected' && (
+      {schedule.status === TASK_STATUS.Rejected && (
         <span className="text-xs text-muted-foreground">Rejected</span>
       )}
     </div>

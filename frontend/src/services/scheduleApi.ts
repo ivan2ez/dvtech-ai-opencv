@@ -124,14 +124,25 @@ export async function deleteSchedulePermanently(id: number): Promise<void> {
  * Technicians who are free for a specific date + slot — the source for the
  * admin assignment dropdown. Busy, unavailable, and fully booked technicians
  * are excluded by the backend.
+ *
+ * `excludeTechnicianId` pre-filters a technician out before the availability
+ * checks run (Req 7.7, 8.2). The Reassign modal passes the current technician
+ * so they can never be reassigned to their own task; the Assign modal omits it.
  */
 export async function getAvailableTechnicians(
   date: string,
-  slot: ScheduleTimeSlot
+  slot: ScheduleTimeSlot,
+  excludeTechnicianId?: number
 ): Promise<AvailableTechnician[]> {
   const response = await api.get<{ technicians: AvailableTechnician[] }>(
     '/schedules/available-technicians',
-    { params: { date, slot } }
+    {
+      params: {
+        date,
+        slot,
+        ...(excludeTechnicianId != null ? { excludeTechnicianId } : {}),
+      },
+    }
   );
   return response.data.technicians;
 }

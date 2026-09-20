@@ -11,7 +11,7 @@ function getDashboardPath(role: UserRole): string {
     case 'admin':
       return '/admin';
     case 'technician':
-      return '/technician';
+      return '/technician/tasks';
     case 'customer':
       // Customers have no dashboard (removed per revisions).
       return '/my-requests';

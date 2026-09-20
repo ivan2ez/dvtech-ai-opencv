@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 
 import { CompleteTaskDialog } from '@/components/technician/CompleteTaskDialog';
 import { resolveUploadUrl } from '@/lib/completionPhoto';
+import { getApiErrorMessage } from '@/lib/utils';
 import type { TechnicianSchedule, ScheduleStatus, SchedulePriority } from '@/types';
+import { TASK_STATUS, STARTABLE_STATUSES } from '@/constants/taskStatus';
 import {
   getScheduleById,
   startTask,
@@ -20,11 +22,12 @@ const SCHEDULE_STATUS_BADGE: Record<
   ScheduleStatus,
   { label: string; className: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }
 > = {
-  assigned: { label: 'Assigned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', variant: 'outline' },
-  accepted: { label: 'Accepted', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
-  rejected: { label: 'Rejected', className: '', variant: 'destructive' },
-  'in-progress': { label: 'In Progress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', variant: 'outline' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
+  [TASK_STATUS.Assigned]: { label: 'Assigned', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', variant: 'outline' },
+  [TASK_STATUS.Accepted]: { label: 'Accepted', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
+  [TASK_STATUS.Rejected]: { label: 'Rejected', className: '', variant: 'destructive' },
+  [TASK_STATUS.Reassigned]: { label: 'Reassigned', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400', variant: 'outline' },
+  [TASK_STATUS.InProgress]: { label: 'In Progress', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', variant: 'outline' },
+  [TASK_STATUS.Completed]: { label: 'Completed', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', variant: 'outline' },
 };
 
 const PRIORITY_BADGE: Record<
@@ -36,11 +39,13 @@ const PRIORITY_BADGE: Record<
   high: { label: 'High', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', variant: 'outline' },
 };
 
-// Backend status machine: assigned -> in-progress -> completed.
+// Backend status machine: assigned/reassigned -> in-progress -> completed.
+// Statuses come from the shared Task_Status_Enum so the progression indicator
+// tracks exactly what the server stores.
 const STATUS_STEPS: { key: ScheduleStatus; label: string }[] = [
-  { key: 'assigned', label: 'Assigned' },
-  { key: 'in-progress', label: 'In Progress' },
-  { key: 'completed', label: 'Completed' },
+  { key: TASK_STATUS.Assigned, label: 'Assigned' },
+  { key: TASK_STATUS.InProgress, label: 'In Progress' },
+  { key: TASK_STATUS.Completed, label: 'Completed' },
 ];
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -68,7 +73,10 @@ function formatDateTime(dateStr: string | null | undefined): string {
 }
 
 function getStepIndex(status: ScheduleStatus): number {
-  const idx = STATUS_STEPS.findIndex((s) => s.key === status);
+  // A reassigned task sits at the same point in the progression as an assigned
+  // one — it is startable but not yet started (Req 9.8, 18.5).
+  const effectiveStatus = status === TASK_STATUS.Reassigned ? TASK_STATUS.Assigned : status;
+  const idx = STATUS_STEPS.findIndex((s) => s.key === effectiveStatus);
   return idx >= 0 ? idx : -1;
 }
 
@@ -82,6 +90,7 @@ export function TaskDetail() {
   // Complete dialog state
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [isSubmittingComplete, setIsSubmittingComplete] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   const fetchSchedule = useCallback(async () => {
     if (!id) return;
@@ -135,13 +144,14 @@ export function TaskDetail() {
   }
 
   function handleOpenCompleteDialog() {
+    setCompleteError(null);
     setCompleteDialogOpen(true);
   }
 
   async function handleComplete(report: string, photo: File) {
     if (!schedule) return;
     setIsSubmittingComplete(true);
-    setError(null);
+    setCompleteError(null);
     try {
       const scheduleId = schedule.id;
       await completeTask(schedule.id, report, photo);
@@ -150,8 +160,11 @@ export function TaskDetail() {
       toast.success(`Task #${scheduleId} marked as completed.`);
     } catch (err) {
       console.error('Failed to complete task:', err);
-      // The axios interceptor surfaces the backend message via toast.
-      setError('Failed to complete the task. Please try again.');
+      // Surface the specific server message inline in the modal (Req 17.10);
+      // keep the dialog open so the technician can read it and retry.
+      setCompleteError(
+        getApiErrorMessage(err, 'Failed to complete the task. Please try again.'),
+      );
     } finally {
       setIsSubmittingComplete(false);
     }
@@ -253,7 +266,7 @@ export function TaskDetail() {
               {priorityConfig.label}
             </Badge>
           </div>
-          {schedule.status === 'completed' && schedule.completedAt && (
+          {schedule.status === TASK_STATUS.Completed && schedule.completedAt && (
             <div>
               <p className="text-sm text-muted-foreground">Completed Date</p>
               <p className="font-medium">{formatDateTime(schedule.completedAt)}</p>
@@ -263,12 +276,12 @@ export function TaskDetail() {
       </div>
 
       {/* Status progression — hidden for rejected tasks, which are off the main path */}
-      {schedule.status !== 'rejected' && (
+      {schedule.status !== TASK_STATUS.Rejected && (
         <div className="rounded-lg border p-6 space-y-4">
           <h2 className="text-lg font-semibold">Status Progression</h2>
           <div className="flex items-center justify-between">
             {STATUS_STEPS.map((step, index) => {
-              const isTaskComplete = schedule.status === 'completed';
+              const isTaskComplete = schedule.status === TASK_STATUS.Completed;
               const isCompleted = isTaskComplete || index < currentStepIndex;
               const isCurrent = !isTaskComplete && index === currentStepIndex;
               const isFuture = !isTaskComplete && index > currentStepIndex;
@@ -304,7 +317,7 @@ export function TaskDetail() {
                   {index < STATUS_STEPS.length - 1 && (
                     <div
                       className={`h-0.5 flex-1 mx-2 ${
-                        schedule.status === 'completed' || index < currentStepIndex
+                        schedule.status === TASK_STATUS.Completed || index < currentStepIndex
                           ? 'bg-green-500'
                           : 'bg-gray-200 dark:bg-gray-700'
                       }`}
@@ -365,7 +378,7 @@ export function TaskDetail() {
       )}
 
       {/* Completion report display */}
-      {schedule.status === 'completed' && schedule.report && (
+      {schedule.status === TASK_STATUS.Completed && schedule.report && (
         <div className="rounded-lg border p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
             <h2 className="text-lg font-semibold">Completion Report</h2>
@@ -394,7 +407,7 @@ export function TaskDetail() {
       )}
 
       {/* Rejection reason display */}
-      {schedule.status === 'rejected' && schedule.rejectionReason && (
+      {schedule.status === TASK_STATUS.Rejected && schedule.rejectionReason && (
         <div className="rounded-lg border p-6 space-y-2">
           <h2 className="text-lg font-semibold">Rejection Reason</h2>
           <p className="text-sm whitespace-pre-wrap">{schedule.rejectionReason}</p>
@@ -405,7 +418,7 @@ export function TaskDetail() {
       <div className="rounded-lg border p-6 space-y-4">
         <h2 className="text-lg font-semibold">Actions</h2>
         <div className="flex items-center gap-3">
-          {schedule.status === 'assigned' && (
+          {STARTABLE_STATUSES.includes(schedule.status) && (
             <Button
               variant="default"
               disabled={actionLoading}
@@ -415,7 +428,7 @@ export function TaskDetail() {
               Start
             </Button>
           )}
-          {schedule.status === 'in-progress' && (
+          {schedule.status === TASK_STATUS.InProgress && (
             <>
               <Button
                 variant="outline"
@@ -435,10 +448,10 @@ export function TaskDetail() {
               </Button>
             </>
           )}
-          {schedule.status === 'completed' && (
+          {schedule.status === TASK_STATUS.Completed && (
             <span className="text-sm text-muted-foreground">This task has been completed.</span>
           )}
-          {schedule.status === 'rejected' && (
+          {schedule.status === TASK_STATUS.Rejected && (
             <span className="text-sm text-muted-foreground">This task was rejected.</span>
           )}
         </div>
@@ -450,6 +463,7 @@ export function TaskDetail() {
         onOpenChange={setCompleteDialogOpen}
         taskId={schedule.id}
         isSubmitting={isSubmittingComplete}
+        submitError={completeError}
         onSubmit={(report, photo) => void handleComplete(report, photo)}
       />
     </div>

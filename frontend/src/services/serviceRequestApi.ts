@@ -55,6 +55,19 @@ export async function getArchivedServiceRequests(): Promise<ServiceRequest[]> {
   return response.data.data;
 }
 
+/**
+ * Admin: the approved, still-unscheduled requests ready to assign, with the
+ * quotation Paid-gate applied server-side — a quotation-based request only
+ * appears here once its quotation is marked paid, while non-quotation requests
+ * appear as soon as they are approved (Req 11.5, 11.6, 11.7).
+ */
+export async function getRequestsAwaitingScheduling(): Promise<ServiceRequest[]> {
+  const response = await api.get<{ data: ServiceRequest[] }>(
+    '/service-requests/awaiting-scheduling'
+  );
+  return response.data.data;
+}
+
 /** Archives a service request (admin). */
 export async function archiveServiceRequest(id: number): Promise<void> {
   await api.delete(`/service-requests/${id}/archive`);

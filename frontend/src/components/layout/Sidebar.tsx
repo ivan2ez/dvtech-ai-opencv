@@ -20,6 +20,7 @@ import {
   MessageCircle,
   PanelLeft,
   SearchCheck,
+  ReceiptText,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -34,6 +35,7 @@ function getCustomerLinks(): SidebarLink[] {
   // dashboard. Troubleshooting was renamed to "Repair Tips" (less technical).
   return [
     { label: 'My Requests', to: '/my-requests', icon: FileText },
+    { label: 'My Quotations', to: '/my-quotations', icon: ReceiptText },
     { label: 'AI Recommendation', to: '/ai-recommendation', icon: BrainCircuit },
     { label: 'Repair Tips', to: '/troubleshooting', icon: SearchCheck },
     { label: 'Chat', to: '/chat', icon: MessageCircle },
@@ -45,6 +47,7 @@ function getAdminLinks(): SidebarLink[] {
     { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
     { label: 'Manage Requests', to: '/admin/requests', icon: FileText },
     { label: 'Manage Schedules', to: '/admin/schedules', icon: CalendarDays },
+    { label: 'Manage Quotations', to: '/admin/quotations', icon: ReceiptText },
     { label: 'Manage Products', to: '/admin/products', icon: Box },
     { label: 'Manage Brands', to: '/admin/brands', icon: Tag },
     { label: 'Manage Services', to: '/admin/services', icon: Wrench },
@@ -55,8 +58,9 @@ function getAdminLinks(): SidebarLink[] {
 }
 
 function getTechnicianLinks(): SidebarLink[] {
+  // Technicians have no Dashboard (removed per revisions) — My Tasks is the
+  // only entry and the technician landing page.
   return [
-    { label: 'Dashboard', to: '/technician', icon: LayoutDashboard },
     { label: 'My Tasks', to: '/technician/tasks', icon: ClipboardList },
   ];
 }

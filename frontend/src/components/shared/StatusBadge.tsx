@@ -10,6 +10,7 @@ export type Status =
   | 'rejected'
   | 'assigned'
   | 'accepted'
+  | 'reassigned'
   | 'in-progress'
   | 'completed'
   | 'needs-rescheduling'
@@ -61,6 +62,14 @@ const STATUS_CONFIG: Record<Status, StatusConfig> = {
     label: 'Accepted',
     className:
       'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+    variant: 'outline',
+  },
+  // A reassigned task is startable like an assigned one, so it shares the same
+  // purple/violet family to read as "ready to start".
+  reassigned: {
+    label: 'Reassigned',
+    className:
+      'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
     variant: 'outline',
   },
   'in-progress': {

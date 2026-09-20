@@ -22,6 +22,12 @@ interface CompleteTaskDialogProps {
   onOpenChange: (open: boolean) => void;
   taskId: number | null;
   isSubmitting: boolean;
+  /**
+   * The specific server error from the last failed completion attempt, surfaced
+   * inline inside the modal (Req 17.10). The dialog stays open on failure so the
+   * technician can read the message and correct the submission.
+   */
+  submitError?: string | null;
   /** Resolves the completion. Receives the trimmed report and the chosen photo. */
   onSubmit: (report: string, photo: File) => void;
 }
@@ -36,6 +42,7 @@ export function CompleteTaskDialog({
   onOpenChange,
   taskId,
   isSubmitting,
+  submitError,
   onSubmit,
 }: CompleteTaskDialogProps) {
   const [report, setReport] = useState('');
@@ -176,6 +183,18 @@ export function CompleteTaskDialog({
             )}
           </div>
         </div>
+
+        {/* Specific server error from the last failed submit (Req 17.10). */}
+        {submitError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2"
+          >
+            <p className="text-sm font-medium text-destructive">{submitError}</p>
+          </div>
+        )}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel

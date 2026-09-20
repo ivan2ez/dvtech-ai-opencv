@@ -5,7 +5,7 @@ from app.models.responses import HealthCheckResponse
 router = APIRouter()
 
 
-@router.get("/", response_model=HealthCheckResponse)
+@router.get("/health", response_model=HealthCheckResponse)
 async def health_check() -> HealthCheckResponse:
     """Health check endpoint to verify the AI service is running."""
     return HealthCheckResponse(

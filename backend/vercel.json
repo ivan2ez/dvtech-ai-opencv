@@ -15,7 +15,7 @@
   "crons": [
     {
       "path": "/api/internal/expire-reschedules",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

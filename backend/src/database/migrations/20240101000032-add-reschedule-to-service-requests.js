@@ -50,12 +50,6 @@ module.exports = {
     await addColumnIfMissing('proposed_technician_id', {
       type: Sequelize.INTEGER,
       allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
     });
 
     await addColumnIfMissing('reschedule_reason', {
@@ -92,6 +86,26 @@ module.exports = {
       allowNull: true,
     });
 
+    // Add the FK separately — TiDB cannot add a column and its foreign key in
+    // the same ALTER TABLE statement. Guarded so a re-run after a partial
+    // failure doesn't error on an already-existing constraint.
+    try {
+      await queryInterface.addConstraint('service_requests', {
+        fields: ['proposed_technician_id'],
+        type: 'foreign key',
+        name: 'fk_service_requests_proposed_technician',
+        references: { table: 'users', field: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+      });
+    } catch (err) {
+      // Ignore "constraint already exists" style errors so the migration is
+      // idempotent across partial-failure re-runs.
+      if (!/exist|duplicate/i.test(String(err && err.message))) {
+        throw err;
+      }
+    }
+
     const indexes = await queryInterface.showIndex('service_requests');
     if (!indexes.some((index) => index.name === 'idx_service_requests_reschedule_token_hash')) {
       await queryInterface.addIndex('service_requests', ['reschedule_token_hash'], {
@@ -121,6 +135,14 @@ module.exports = {
     await queryInterface.removeColumn('service_requests', 'reschedule_requested_at');
     await queryInterface.removeColumn('service_requests', 'reschedule_token_hash');
     await queryInterface.removeColumn('service_requests', 'reschedule_reason');
+    try {
+      await queryInterface.removeConstraint(
+        'service_requests',
+        'fk_service_requests_proposed_technician'
+      );
+    } catch (err) {
+      // constraint may not exist; ignore
+    }
     await queryInterface.removeColumn('service_requests', 'proposed_technician_id');
     await queryInterface.removeColumn('service_requests', 'proposed_time');
     await queryInterface.removeColumn('service_requests', 'proposed_date');

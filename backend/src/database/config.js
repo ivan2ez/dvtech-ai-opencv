@@ -1,6 +1,23 @@
 const path = require('path');
 require('dotenv').config();
 
+const productionConfig = process.env.DATABASE_URL
+  ? {
+      use_env_variable: 'DATABASE_URL',
+      dialect: 'mysql',
+      logging: false,
+      dialectOptions: { ssl: { rejectUnauthorized: false } },
+    }
+  : {
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '3306', 10),
+      dialect: 'mysql',
+      logging: false,
+    };
+
 module.exports = {
   development: {
     username: process.env.DB_USERNAME || 'root',
@@ -16,13 +33,5 @@ module.exports = {
     storage: path.join(__dirname, '..', '..', 'database.test.sqlite'),
     logging: false,
   },
-  production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    dialect: 'mysql',
-    logging: false,
-  },
+  production: productionConfig,
 };

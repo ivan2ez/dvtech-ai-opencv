@@ -24,6 +24,12 @@ import { errorMiddleware } from './middlewares/errorMiddleware';
 import { publicRateLimiter } from './middlewares/rateLimitMiddleware';
 
 const app = express();
+
+// Vercel (and most PaaS) put the app behind a proxy that sets X-Forwarded-For.
+// Trust the first proxy hop so express-rate-limit and req.ip read the real
+// client IP instead of throwing a ValidationError.
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
